@@ -2,67 +2,31 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>RUMO • Início</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RUMO</title>
     <link rel="stylesheet" href="rumo.css">
-    <style>
-        .menu-container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-        .botao-menu {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--card-bg);
-            padding: 25px;
-            border-radius: 16px;
-            text-decoration: none;
-            color: var(--text-main);
-            font-size: 1.2rem;
-            font-weight: 600;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: 0.3s;
-        }
-        .botao-menu:hover {
-            border-color: var(--accent);
-            background: #2d3a4f;
-            transform: translateX(10px);
-        }
-        .icon { font-size: 1.5rem; }
-    </style>
+    <script>
+        const theme = localStorage.getItem('theme');
+        if (theme === 'light') document.documentElement.classList.add('light-mode');
+    </script>
 </head>
 <body>
-
-<div class="container">
-    <h1 style="margin-top: 50px;">RUMO</h1>
-    <p style="text-align: center; color: var(--text-dim); margin-bottom: 40px;">Gestão de Metas e Ganhos</p>
-
-    <div class="menu-container">
-        <a href="ganhos.html" class="botao-menu">
-            <span>💰 Registrar Ganhos</span>
-            <span class="icon">›</span>
-        </a>
-        <a href="painel.html" class="botao-menu">
-            <span>📊 Abrir Painel</span>
-            <span class="icon">›</span>
-        </a>
-        <a href="historico.html" class="botao-menu">
-            <span>📁 Ver Histórico</span>
-            <span class="icon">›</span>
-        </a>
+    <button class="theme-toggle" onclick="toggleTema()" id="themeBtn">Light Mode</button>
+    <div class="container">
+        <h1 style="margin-top: 80px;">RUMO</h1>
+        <div style="display: flex; flex-direction: column; gap: 15px; max-width: 350px; margin: 0 auto;">
+            <a href="ganhos.html" class="nav-btn btn-secondary">Registrar Ganhos</a>
+            <a href="painel.html" class="nav-btn btn-primary">Painel de Metas</a>
+            <a href="historico.html" class="nav-btn btn-secondary">Histórico</a>
+        </div>
     </div>
-</div>
-
-<script>
-    function toggleTema() {
-        document.body.classList.toggle('light-mode');
-        localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
-    }
-    if(localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');
-</script>
-
+    <script>
+        function toggleTema() {
+            const isLight = document.body.classList.toggle('light-mode');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            document.getElementById('themeBtn').innerText = isLight ? 'Dark Mode' : 'Light Mode';
+        }
+        document.body.className = localStorage.getItem('theme') === 'light' ? 'light-mode' : '';
+    </script>
 </body>
 </html>

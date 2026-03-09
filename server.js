@@ -11,7 +11,6 @@ app.use(express.static(__dirname));
 const db = new sqlite3.Database("rumo.db");
 
 db.serialize(() => {
-    // Tabela atualizada com Uber e 99
     db.run(`CREATE TABLE IF NOT EXISTS ganhos (
         data TEXT PRIMARY KEY, 
         uber REAL DEFAULT 0, 
@@ -89,5 +88,10 @@ app.get("/historico-geral", (req, res) => {
     });
 });
 
-const PORT = 3000;
-app.listen(PORT, () => console.log(`RUMO rodando em http://localhost:${PORT}`));
+// CONFIGURAÇÃO DE PORTA DINÂMICA (RENDER) E ACESSO EXTERNO (CELULAR)
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`RUMO rodando em:`);
+    console.log(`- Local: http://localhost:${PORT}`);
+    console.log(`- Na sua rede: http://SEU_IP_LOCAL:${PORT}`);
+});
