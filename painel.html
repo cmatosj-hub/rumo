@@ -2,27 +2,25 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RUMO • Performance iPad</title>
+    <title>RUMO • Monitor Contínuo</title>
     <style>
-        /* OTIMIZADO PARA IPAD 1 (SAFARI 5.1.1) */
-        * { box-sizing: border-box; -webkit-box-sizing: border-box; } /* Crucial para alinhamento */
+        /* CONFIGURAÇÃO PARA RESOLUÇÃO IPAD (1024px largura) */
+        * { box-sizing: border-box; -webkit-box-sizing: border-box; }
         
         body { 
             background-color: #f1f5f9; 
-            color: #1e293b; 
             font-family: Helvetica, Arial, sans-serif; 
-            text-align: center; 
             margin: 0; 
-            padding: 15px;
+            padding: 20px;
+            overflow-x: hidden;
         }
+
         .container { 
-            width: 100%; 
+            width: 760px; 
             margin: 0 auto; 
-            max-width: 850px; 
         }
         
-        h1 { color: #0284c7; font-size: 38px; margin: 10px 0 20px 0; font-weight: bold; }
+        h1 { color: #0284c7; font-size: 40px; margin: 0 0 20px 0; text-align: center; }
         
         .card { 
             background-color: #ffffff; 
@@ -30,64 +28,55 @@
             padding: 20px; 
             margin-bottom: 15px; 
             border: 1px solid #cbd5e1;
-            box-shadow: 1px 1px 3px #ccc;
-            width: 100%; /* Garante largura total */
+            box-shadow: 2px 2px 4px #ccc;
+            width: 100%;
+            text-align: center;
         }
 
         /* Barra de Progresso */
         .bar-container { 
             background-color: #e2e8f0; 
-            height: 55px; 
-            border-radius: 27px; 
+            height: 50px; 
+            border-radius: 25px; 
             margin: 15px 0; 
-            overflow: hidden; 
             border: 1px solid #94a3b8;
+            overflow: hidden;
         }
-        #bar { 
-            height: 100%; 
-            width: 0%; 
-            background-color: #94a3b8;
-            border-radius: 27px;
-        }
+        #bar { height: 100%; width: 0%; background-color: #94a3b8; border-radius: 25px; transition: width 0.5s; }
 
         .bg-verde { background-color: #22c55e !important; }
         .bg-amarelo { background-color: #eab308 !important; }
         .bg-vermelho { background-color: #ef4444 !important; }
 
-        .label { color: #64748b; text-transform: uppercase; font-size: 13px; font-weight: bold; display: block; }
-        .valor { font-size: 32px; font-weight: bold; display: block; margin-top: 5px; color: #0f172a; }
+        .label { color: #64748b; text-transform: uppercase; font-size: 14px; font-weight: bold; }
+        .valor { font-size: 35px; font-weight: bold; color: #0f172a; margin-top: 5px; display: block; }
         
-        .status-msg { font-size: 18px; font-weight: bold; margin-top: 10px; }
-        .text-verde { color: #16a34a; }
-        .text-amarelo { color: #ca8a04; }
-        .text-vermelho { color: #dc2626; }
-
-        /* Tabela de Alinhamento perfeita */
-        .tabela-ajuste { 
-            width: 100%; 
+        .tabela-corrigida { 
+            width: 760px; 
             border-collapse: collapse; 
-            margin-bottom: 0px; 
-            table-layout: fixed; 
+            margin-bottom: 15px;
         }
-        .tabela-ajuste td { 
-            vertical-align: top; 
+        .tabela-corrigida td { 
+            width: 380px; 
             padding: 0; 
+            vertical-align: top;
         }
-        /* Espaçamento interno entre os cards sem afetar as bordas externas */
-        .td-esq { padding-right: 8px; }
-        .td-dir { padding-left: 8px; }
 
         .btn { 
             display: block; 
-            padding: 22px; 
+            width: 100%;
+            padding: 20px; 
             background-color: #0284c7; 
             color: #ffffff; 
             text-decoration: none; 
             border-radius: 10px; 
             font-size: 22px; 
             font-weight: bold;
-            margin-top: 10px;
+            text-align: center;
         }
+
+        /* Indicador de "Vivo" (opcional para saber se atualizou) */
+        #update-tick { font-size: 10px; color: #cbd5e1; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -95,25 +84,23 @@
         <h1>SISTEMA RUMO</h1>
 
         <div class="card">
-            <small class="label" id="dia-texto">CARREGANDO...</small>
-            <div class="bar-container">
-                <div id="bar"></div>
-            </div>
-            <div id="pct-texto" style="font-size: 28px; font-weight: bold;">0%</div>
-            <div id="status-desc" class="status-msg">---</div>
+            <span class="label" id="dia-texto">SINCRONIZANDO...</span>
+            <div class="bar-container"><div id="bar"></div></div>
+            <div id="pct-texto" style="font-size: 30px; font-weight: bold;">0%</div>
+            <div id="status-desc" style="font-size: 18px; font-weight: bold; margin-top: 10px;">---</div>
         </div>
 
-        <table class="tabela-ajuste">
+        <table class="tabela-corrigida">
             <tr>
-                <td class="td-esq">
+                <td style="padding-right: 10px;">
                     <div class="card">
-                        <small class="label">Projeção</small>
+                        <span class="label">Projeção</span>
                         <span class="valor" id="proj-v">R$ 0</span>
                     </div>
                 </td>
-                <td class="td-dir">
+                <td style="padding-left: 10px;">
                     <div class="card">
-                        <small class="label">Real</small>
+                        <span class="label">Ganho Real</span>
                         <span class="valor" id="real-v">R$ 0</span>
                     </div>
                 </td>
@@ -121,67 +108,70 @@
         </table>
 
         <div class="card">
-            <small class="label">Meta Total da Semana</small>
-            <span class="valor" id="meta-v" style="color: #0284c7; font-size: 40px;">R$ 0</span>
+            <span class="label">Meta Total da Semana</span>
+            <span class="valor" id="meta-v" style="color: #0284c7; font-size: 45px;">R$ 0</span>
+            <div id="update-tick">Última atualização: <span id="last-time">--:--</span></div>
         </div>
 
-        <a href="ganhos.html" class="btn">VOLTAR PARA REGISTROS</a>
+        <a href="ganhos.html" class="btn">VOLTAR</a>
     </div>
 
     <script type="text/javascript">
-        function carregarPainel() {
+        function carregar() {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', '/status', true);
+            // Adicionamos um número aleatório ao final da URL para evitar o CACHE do Safari antigo
+            xhr.open('GET', '/status?t=' + new Date().getTime(), true);
             xhr.onreadystatechange = function() {
                 if (xhr.readyState == 4 && xhr.status == 200) {
-                    var dados = JSON.parse(xhr.responseText);
-                    
+                    var d = JSON.parse(xhr.responseText);
                     var agora = new Date();
-                    var diaSemana = agora.getDay(); 
-                    var diasPassados = (diaSemana === 0) ? 7 : diaSemana; 
+                    var diaS = agora.getDay(); 
+                    var diaP = (diaS === 0) ? 7 : diaS; 
                     
-                    var diasDeCalculo = diasPassados;
-                    if (diasDeCalculo > dados.dias) diasDeCalculo = dados.dias;
+                    var diasC = diaP > d.dias ? d.dias : diaP;
+                    var proj = (d.meta / d.dias) * diasC;
+                    var real = d.ganhos;
+                    var perf = real / proj;
                     
-                    var metaProjetada = (dados.meta / dados.dias) * diasDeCalculo;
-                    var ganhoReal = dados.ganhos;
-                    
-                    var performance = (ganhoReal / metaProjetada);
                     var cor = "bg-vermelho";
-                    var msg = "ALERTA: RITMO BAIXO";
-                    var msgClasse = "text-vermelho";
-
-                    if (performance >= 1) {
-                        cor = "bg-verde";
-                        msg = "DENTRO DA META!";
-                        msgClasse = "text-verde";
-                    } else if (performance >= 0.85) {
-                        cor = "bg-amarelo";
-                        msg = "ABAIXO DA MÉDIA";
-                        msgClasse = "text-amarelo";
-                    }
+                    var msg = "RITMO BAIXO";
+                    if (perf >= 1) { cor = "bg-verde"; msg = "DENTRO DA META"; }
+                    else if (perf >= 0.85) { cor = "bg-amarelo"; msg = "ABAIXO DA MÉDIA"; }
 
                     var nomes = ["DOMINGO", "SEGUNDA", "TERÇA", "QUARTA", "QUINTA", "SEXTA", "SÁBADO"];
-                    document.getElementById("dia-texto").innerHTML = nomes[diaSemana] + " (DIA " + diasPassados + " DE " + dados.dias + ")";
-                    document.getElementById("real-v").innerHTML = "R$ " + ganhoReal.toFixed(0);
-                    document.getElementById("proj-v").innerHTML = "R$ " + metaProjetada.toFixed(0);
-                    document.getElementById("meta-v").innerHTML = "R$ " + dados.meta.toFixed(0);
+                    document.getElementById("dia-texto").innerHTML = nomes[diaS] + " (DIA " + diaP + " DE " + d.dias + ")";
+                    document.getElementById("real-v").innerHTML = "R$ " + real.toFixed(0);
+                    document.getElementById("proj-v").innerHTML = "R$ " + proj.toFixed(0);
+                    document.getElementById("meta-v").innerHTML = "R$ " + d.meta.toFixed(0);
                     
-                    var pctTotal = (dados.meta > 0) ? (ganhoReal / dados.meta) * 100 : 0;
-                    document.getElementById("pct-texto").innerHTML = pctTotal.toFixed(1) + "% DO TOTAL";
+                    var pctT = d.meta > 0 ? (real / d.meta) * 100 : 0;
+                    document.getElementById("pct-texto").innerHTML = pctT.toFixed(1) + "% DA META";
                     
                     var barra = document.getElementById("bar");
-                    barra.style.width = (pctTotal > 100 ? 100 : pctTotal) + "%";
+                    barra.style.width = (pctT > 100 ? 100 : pctT) + "%";
                     barra.className = cor;
                     
                     var desc = document.getElementById("status-desc");
                     desc.innerHTML = msg;
-                    desc.className = "status-msg " + msgClasse;
+                    desc.style.color = (perf >= 1) ? "#16a34a" : (perf >= 0.85 ? "#ca8a04" : "#dc2626");
+
+                    // Atualiza o relógio de controle
+                    var h = agora.getHours();
+                    var m = agora.getMinutes();
+                    document.getElementById("last-time").innerHTML = (h < 10 ? '0'+h : h) + ":" + (m < 10 ? '0'+m : m);
                 }
             };
             xhr.send();
         }
-        window.onload = carregarPainel;
+
+        // Carrega ao abrir a página
+        window.onload = function() {
+            carregar();
+            // Configura para atualizar a cada 30 segundos (30000ms)
+            // Isso mantém o OnRender ativo e os dados novos
+            setInterval(carregar, 30000);
+        };
     </script>
+    123
 </body>
 </html>
