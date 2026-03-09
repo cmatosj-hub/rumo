@@ -5,24 +5,17 @@
     <title>RUMO • Registrar Ganhos</title>
     <link rel="stylesheet" href="rumo.css">
 </head>
-<body>
+<body id="corpo">
+
+<div class="theme-switch" onclick="toggleTema()">🌓</div>
 
 <div class="container">
     <h1>Controle Semanal</h1>
 
     <div class="topcards">
-        <div class="card">
-            <span>Meta Semanal</span>
-            <h2 id="meta">R$ 0</h2>
-        </div>
-        <div class="card">
-            <span>Total Ganho</span>
-            <h2 id="total">R$ 0</h2>
-        </div>
-        <div class="card">
-            <span>Progresso</span>
-            <h2 id="progresso">0%</h2>
-        </div>
+        <div class="card"><span>Meta Semanal</span><h2 id="meta">R$ 0</h2></div>
+        <div class="card"><span>Total Ganho</span><h2 id="total">R$ 0</h2></div>
+        <div class="card"><span>Progresso</span><h2 id="progresso">0%</h2></div>
     </div>
 
     <div class="card">
@@ -32,7 +25,7 @@
                     <th>Dia</th>
                     <th>Ativo</th>
                     <th>Ganho (R$)</th>
-                    <th>Meta Diária</th>
+                    <th>Meta Ajustada</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -53,6 +46,13 @@
     let diasAtivos = { SEG: true, TER: true, QUA: true, QUI: true, SEX: true, SAB: false, DOM: false };
     let metaSemanal = 0;
 
+    function toggleTema() {
+        document.body.classList.toggle('light-mode');
+        localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+    }
+
+    if(localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');
+
     function carregar() {
         fetch("/semana")
             .then(r => r.json())
@@ -64,53 +64,70 @@
             });
     }
 
-    function toggle(d) {
-        diasAtivos[d] = !diasAtivos[d];
-        render();
-    }
-
-    function editar(id) {
-        const el = document.getElementById(id);
-        el.disabled = false;
-        el.focus();
-    }
-
     function render() {
         let html = "";
-        let total = 0;
-        let ativosCount = Object.values(diasAtivos).filter(v => v).length;
-        let metaBase = ativosCount > 0 ? metaSemanal / ativosCount : 0;
+        let totalAcumulado = 0;
+        
+        // 1. Calcular total já ganho e quantos dias ativos restam sem valor preenchido
+        let totalJaGanho = 0;
+        let diasRestantesAtivos = 0;
+
+        dias.forEach(d => {
+            if (ganhos[d]) totalJaGanho += Number(ganhos[d]);
+            if (diasAtivos[d] && !ganhos[d]) diasRestantesAtivos++;
+        });
+
+        // 2. Calcular quanto falta e qual a nova meta para os dias restantes
+        let faltaParaMeta = metaSemanal - totalJaGanho;
+        let metaAjustada = diasRestantesAtivos > 0 ? faltaParaMeta / diasRestantesAtivos : 0;
 
         dias.forEach(d => {
             let ativo = diasAtivos[d];
             let ganho = ganhos[d] || "";
-            let metaDiaria = ativo ? metaBase.toFixed(0) : "-";
-            if (ganho) total += Number(ganho);
+            let metaExibida = "";
+
+            if (!ativo) {
+                metaExibida = "-";
+            } else {
+                // Se já preenchi, a meta era a ajustada naquele momento (ou a base)
+                // Para simplificar, mostramos a meta que o usuário deve perseguir nos dias vazios
+                metaExibida = ganho ? "Batida" : "R$ " + Math.max(0, metaAjustada).toFixed(0);
+            }
 
             let status = "";
             if (ganho && ativo) {
-                if (ganho >= metaBase) status = "<span class='status-ok'>✔</span>";
-                else if (ganho >= metaBase * 0.8) status = "<span class='status-warn'>⚠</span>";
-                else status = "<span class='status-bad'>✖</span>";
+                // Status baseado na meta proporcional simples (Meta total / dias ativos)
+                let metaProporcional = metaSemanal / Object.values(diasAtivos).filter(v=>v).length;
+                if (ganho >= metaProporcional) status = "<b style='color:var(--success)'>✔</b>";
+                else status = "<b style='color:var(--danger)'>✖</b>";
             }
 
             html += `
                 <tr>
-                    <td><strong>${d}</strong></td>
+                    <td><b>${d}</b></td>
                     <td><input type="checkbox" ${ativo ? "checked" : ""} onclick="toggle('${d}')"></td>
                     <td>
-                        <input id="g_${d}" type="number" value="${ganho}" disabled>
-                        <button class="edit" onclick="editar('g_${d}')">✏</button>
+                        <input id="g_${d}" type="number" value="${ganho}" onchange="atualizarLocal('${d}', this.value)">
                     </td>
-                    <td>R$ ${metaDiaria}</td>
+                    <td style="color:var(--accent)">${metaExibida}</td>
                     <td>${status}</td>
                 </tr>`;
         });
 
         document.getElementById("tabela").innerHTML = html;
-        document.getElementById("total").innerText = "R$ " + total;
-        let progresso = metaSemanal > 0 ? ((total / metaSemanal) * 100).toFixed(0) : 0;
+        document.getElementById("total").innerText = "R$ " + totalJaGanho;
+        let progresso = metaSemanal > 0 ? ((totalJaGanho / metaSemanal) * 100).toFixed(0) : 0;
         document.getElementById("progresso").innerText = progresso + "%";
+    }
+
+    function atualizarLocal(dia, valor) {
+        ganhos[dia] = valor;
+        render(); // Re-calcula a meta dos outros dias instantaneamente
+    }
+
+    function toggle(d) {
+        diasAtivos[d] = !diasAtivos[d];
+        render();
     }
 
     function salvar() {
@@ -124,10 +141,7 @@
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ listaGanhos: lista })
-        }).then(() => {
-            alert("Dados salvos!");
-            location.reload();
-        });
+        }).then(() => alert("Dados salvos!"));
     }
 
     carregar();
