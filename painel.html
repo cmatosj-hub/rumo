@@ -1,83 +1,85 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="pt-br">
 <head>
-
-<meta charset="UTF-8">
-
-<link rel="stylesheet" href="rumo.css">
-
-<title>Painel</title>
-
+    <meta charset="UTF-8">
+    <title>RUMO • Painel</title>
+    <link rel="stylesheet" href="rumo.css">
+    <style>
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 40px;
+        }
+        .valor { font-size: 2rem; font-weight: bold; display: block; margin-top: 5px; }
+        .label { color: var(--text-dim); font-size: 0.9rem; text-transform: uppercase; }
+    </style>
 </head>
+<body>
 
-<body class="painel">
+<div class="container">
+    <h1>Painel de Desempenho</h1>
 
-<h1>RUMO</h1>
+    <div class="card">
+        <span class="label">Progresso Geral</span>
+        <div class="barra">
+            <div id="progresso"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+            <span id="porcentagem-texto" style="font-weight: bold; color: var(--accent);">0%</span>
+            <span id="meta-total" style="color: var(--text-dim);">Meta: R$ 0</span>
+        </div>
+    </div>
 
-<div id="ganhos">0</div>
+    <div class="status-grid">
+        <div class="card">
+            <span class="label">Já Conquistado</span>
+            <span id="ganhos" class="valor" style="color: var(--success);">R$ 0</span>
+        </div>
+        <div class="card">
+            <span class="label">Ainda Faltam</span>
+            <span id="falta" class="valor" style="color: var(--danger);">R$ 0</span>
+        </div>
+        <div class="card">
+            <span class="label">Média p/ Dia</span>
+            <span id="media" class="valor">R$ 0</span>
+        </div>
+    </div>
 
-<div id="meta">0</div>
-
-<div id="falta">0</div>
-
-<div class="barra">
-
-<div id="progresso"></div>
-
+    <div style="text-align: center; margin-top: 50px;">
+        <button onclick="window.location.href='index.html'">Voltar ao Menu</button>
+    </div>
 </div>
 
 <script>
+    function atualizar() {
+        fetch("/status")
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById("ganhos").innerText = "R$ " + d.ganhos.toFixed(2);
+                document.getElementById("meta-total").innerText = "Meta Total: R$ " + d.meta.toFixed(2);
+                document.getElementById("falta").innerText = "R$ " + d.falta.toFixed(2);
+                document.getElementById("media").innerText = "R$ " + (d.meta / 5).toFixed(2); // Ajuste conforme a lógica de dias
 
-function atualizar(){
+                let porcentagem = d.meta > 0 ? (d.ganhos / d.meta) * 100 : 0;
+                if (porcentagem > 100) porcentagem = 100;
 
-fetch("/status")
+                const barra = document.getElementById("progresso");
+                const texto = document.getElementById("porcentagem-texto");
+                
+                barra.style.width = porcentagem + "%";
+                texto.innerText = porcentagem.toFixed(1) + "%";
 
-.then(r=>r.json())
+                if (porcentagem < 50) barra.className = "vermelho";
+                else if (porcentagem < 90) barra.className = "amarelo";
+                else barra.className = "verde";
+            });
+    }
 
-.then(d=>{
-
-document.getElementById("ganhos").innerText =
-"Ganhos: R$ "+d.ganhos
-
-document.getElementById("meta").innerText =
-"Meta: R$ "+d.meta
-
-document.getElementById("falta").innerText =
-"Faltam: R$ "+d.falta
-
-let porcentagem = (d.ganhos/d.meta)*100
-
-if(porcentagem>100) porcentagem=100
-
-const barra = document.getElementById("progresso")
-
-barra.style.width = porcentagem+"%"
-
-if(porcentagem < 80){
-
-barra.className="vermelho"
-
-}else if(porcentagem < 100){
-
-barra.className="amarelo"
-
-}else{
-
-barra.className="verde"
-
-}
-
-})
-
-}
-
-setInterval(atualizar,5000)
-
-atualizar()
-
+    // Atualiza a cada 30 segundos ou ao carregar
+    setInterval(atualizar, 30000);
+    atualizar();
 </script>
 
 </body>
-
 </html>

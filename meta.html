@@ -1,78 +1,64 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="pt-br">
 <head>
-
-<meta charset="UTF-8">
-
-<link rel="stylesheet" href="rumo.css">
-
-<title>Meta semanal</title>
-
+    <meta charset="UTF-8">
+    <title>RUMO • Meta Semanal</title>
+    <link rel="stylesheet" href="rumo.css">
 </head>
-
 <body>
 
-<h1>Configuração da Semana</h1>
+<div class="container">
+    <h1>Configuração</h1>
 
-<div class="card">
+    <div class="card" style="max-width: 400px; margin: 0 auto;">
+        <div style="margin-bottom: 25px; text-align: left;">
+            <label style="display: block; color: var(--text-dim); margin-bottom: 8px;">Meta da Semana (R$)</label>
+            <input id="meta" type="number" style="width: 100%; box-sizing: border-box; font-size: 1.2rem;" placeholder="Ex: 1000">
+        </div>
 
-<label>Meta semanal</label>
+        <div style="margin-bottom: 25px; text-align: left;">
+            <label style="display: block; color: var(--text-dim); margin-bottom: 8px;">Dias de Trabalho</label>
+            <select id="dias" style="width: 100%; padding: 10px; background: #0f172a; color: white; border: 1px solid #334155; border-radius: 6px;">
+                <option value="1">1 dia</option>
+                <option value="2">2 dias</option>
+                <option value="3">3 dias</option>
+                <option value="4">4 dias</option>
+                <option value="5" selected>5 dias</option>
+                <option value="6">6 dias</option>
+                <option value="7">7 dias</option>
+            </select>
+        </div>
 
-<input id="meta" type="number">
+        <button onclick="salvar()" style="width: 100%;">Gravar Configuração</button>
+    </div>
 
-<br><br>
-
-<label>Dias trabalhados</label>
-
-<select id="dias">
-
-<option value="1">1</option>
-<option value="2">2</option>
-<option value="3">3</option>
-<option value="4">4</option>
-<option value="5" selected>5</option>
-<option value="6">6</option>
-<option value="7">7</option>
-
-</select>
-
-<br><br>
-
-<button onclick="salvar()">Salvar</button>
-
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="index.html" style="color: var(--text-dim); text-decoration: none;">← Cancelar e Voltar</a>
+    </div>
 </div>
 
 <script>
+    function salvar() {
+        const meta = document.getElementById("meta").value;
+        const dias = document.getElementById("dias").value;
 
-function salvar(){
+        if(!meta || meta <= 0) {
+            alert("Por favor, insira uma meta válida.");
+            return;
+        }
 
-const meta = document.getElementById("meta").value
-const dias = document.getElementById("dias").value
-
-fetch("/config",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-
-meta:parseFloat(meta),
-dias:parseInt(dias)
-
-})
-
-}).then(()=>{
-
-alert("Configuração salva")
-
-})
-
-}
-
+        fetch("/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                meta: parseFloat(meta),
+                dias: parseInt(dias)
+            })
+        }).then(() => {
+            alert("✅ Configuração salva!");
+            window.location.href = "ganhos.html";
+        });
+    }
 </script>
 
 </body>
