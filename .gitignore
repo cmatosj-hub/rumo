@@ -1,0 +1,10 @@
+# Node modules
+node_modules
+
+# Logs
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# SQLite database (opcional, se você não quer subir)
+rumo.db
