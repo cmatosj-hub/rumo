@@ -5,19 +5,15 @@
     <title>RUMO • Painel</title>
     <link rel="stylesheet" href="rumo.css">
     <style>
-        .status-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-top: 30px;
-        }
+        .status-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 30px; }
         .valor { font-size: 2.2rem; font-weight: bold; display: block; margin-top: 5px; }
         .label { color: var(--text-dim); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
-        .info-hoje { margin-top: 15px; font-size: 0.9rem; color: var(--text-dim); }
+        .barra { width: 100%; height: 25px; background: #334155; border-radius: 12px; margin: 15px 0; overflow: hidden; border: 2px solid rgba(255,255,255,0.1); }
+        #progresso { height: 100%; width: 0%; transition: width 0.8s ease-in-out; }
         .destaque { color: var(--accent); font-weight: bold; }
     </style>
 </head>
-<body id="corpo">
+<body>
 
 <div class="theme-switch" onclick="toggleTema()">🌓</div>
 
@@ -25,15 +21,14 @@
     <h1>Painel de Desempenho</h1>
 
     <div class="card">
-        <span class="label" id="titulo-progresso">Progresso da Meta</span>
+        <span class="label">Progresso Real da Semana</span>
         <div class="barra">
             <div id="progresso"></div>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-            <span id="porcentagem-texto" style="font-weight: bold; font-size: 1.2rem;">0%</span>
-            <span id="meta-acumulada-texto" style="color: var(--text-dim);">Meta esperada: R$ 0</span>
+        <div style="display: flex; justify-content: space-between;">
+            <span id="porcentagem-texto" style="font-weight: bold;">0%</span>
+            <span id="status-meta" style="font-size: 0.9rem;">Calculando...</span>
         </div>
-        <p class="info-hoje">Hoje é <span id="dia-atual" class="destaque">...</span></p>
     </div>
 
     <div class="status-grid">
@@ -47,7 +42,12 @@
         </div>
     </div>
 
-    <div style="text-align: center; margin-top: 50px;">
+    <div style="text-align: center; margin-top: 40px; color: var(--text-dim);">
+        Hoje é <span id="dia-atual" class="destaque">...</span> | 
+        Meta esperada p/ hoje: <span id="meta-esperada" class="destaque">R$ 0</span>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px;">
         <button onclick="window.location.href='index.html'">Voltar ao Menu</button>
     </div>
 </div>
@@ -60,66 +60,48 @@
     if(localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');
 
     function atualizar() {
-        fetch("/semana")
+        fetch("/status")
             .then(r => r.json())
-            .then(data => {
+            .then(d => {
                 const diasSemana = ["DOMINGO", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
-                const dataHoje = new Date();
-                const diaIndex = dataHoje.getDay(); // 0 (Dom) a 6 (Sab)
+                const diaIndex = new Date().getDay();
                 const nomeDia = diasSemana[diaIndex];
                 
+                // Ajuste: Segunda no JS é 1. Se trabalhas 5 dias, fator é diaIndex.
+                let fatorDia = diaIndex === 0 ? d.dias : Math.min(diaIndex, d.dias);
+                let metaHoje = (d.meta / d.dias) * fatorDia;
+
                 document.getElementById("dia-atual").innerText = nomeDia;
+                document.getElementById("ganhos").innerText = "R$ " + d.ganhos.toFixed(2);
+                document.getElementById("meta-total").innerText = "R$ " + d.meta.toFixed(2);
+                document.getElementById("meta-esperada").innerText = "R$ " + metaHoje.toFixed(2);
 
-                // 1. Calcular total ganho
-                let totalGanho = data.ganhos.reduce((acc, curr) => acc + (curr.valor || 0), 0);
-                
-                // 2. Calcular Meta Acumulada até HOJE
-                // Consideramos que a meta é dividida pelos dias trabalhados (data.dias)
-                // Se for domingo (0), a meta acumulada é 100%
-                let fatorDia = diaIndex === 0 ? data.dias : Math.min(diaIndex, data.dias);
-                let metaEsperadaAteHoje = (data.meta / data.dias) * fatorDia;
+                let pctSemana = d.meta > 0 ? (d.ganhos / d.meta) * 100 : 0;
+                let pctDesempenho = metaHoje > 0 ? (d.ganhos / metaHoje) * 100 : 0;
 
-                // 3. Lógica de Porcentagem e Cores
-                // Comparamos o ganho com a meta que deveríamos ter HOJE
-                let porcentagemDesempenho = metaEsperadaAteHoje > 0 ? (totalGanho / metaEsperadaAteHoje) * 100 : 0;
-                
-                // Exibição na tela
-                document.getElementById("ganhos").innerText = "R$ " + totalGanho.toFixed(2);
-                document.getElementById("meta-total").innerText = "R$ " + data.meta.toFixed(2);
-                document.getElementById("meta-acumulada-texto").innerText = "Meta p/ " + nomeDia + ": R$ " + metaEsperadaAteHoje.toFixed(0);
-                
                 const barra = document.getElementById("progresso");
-                const textoPct = document.getElementById("porcentagem-texto");
-                
-                // A barra mostra o progresso em relação à meta SEMANAL total
-                let progressoRealSemana = (totalGanho / data.meta) * 100;
-                barra.style.width = Math.min(progressoRealSemana, 100) + "%";
-                textoPct.innerText = porcentagemDesempenho.toFixed(1) + "% da meta diária";
+                const txtPct = document.getElementById("porcentagem-texto");
+                const txtStatus = document.getElementById("status-meta");
 
-                // CORES (Baseado no seu pedido)
+                // A barra mostra quanto da meta SEMANAL você já fez
+                barra.style.width = Math.min(pctSemana, 100) + "%";
+                txtPct.innerText = pctSemana.toFixed(1) + "% da semana";
+
+                // A cor da barra e o status dependem se você está no ritmo para hoje
                 if (diaIndex === 0) { // Domingo
-                    if (porcentagemDesempenho >= 100) {
-                        barra.className = "verde";
-                        textoPct.style.color = "var(--success)";
+                    if (pctSemana >= 100) { barra.className = "verde"; txtStatus.innerText = "Meta Batida! 🎉"; }
+                    else { barra.className = "vermelho"; txtStatus.innerText = "Meta Não Atingida"; }
+                } else {
+                    if (pctDesempenho >= 99 && pctDesempenho <= 105) {
+                        barra.className = "amarelo"; txtStatus.innerText = "No Ritmo (Justo)";
+                    } else if (pctDesempenho > 105) {
+                        barra.className = "verde"; txtStatus.innerText = "Acima do Esperado! 🚀";
                     } else {
-                        barra.className = "vermelho";
-                        textoPct.style.color = "var(--danger)";
-                    }
-                } else { // Outros dias
-                    if (porcentagemDesempenho >= 99 && porcentagemDesempenho <= 105) {
-                        barra.className = "amarelo";
-                        textoPct.style.color = "var(--warning)";
-                    } else if (porcentagemDesempenho > 105) {
-                        barra.className = "verde";
-                        textoPct.style.color = "var(--success)";
-                    } else {
-                        barra.className = "vermelho";
-                        textoPct.style.color = "var(--danger)";
+                        barra.className = "vermelho"; txtStatus.innerText = "Abaixo do Ritmo";
                     }
                 }
             });
     }
-
     atualizar();
 </script>
 </body>

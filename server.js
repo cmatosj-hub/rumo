@@ -16,7 +16,6 @@ db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS configuracao (meta_semanal REAL, dias_trabalhados INTEGER)`);
 });
 
-// CONFIGURAÇÃO
 app.post("/config", (req, res) => {
     const { meta, dias } = req.body;
     db.run("DELETE FROM configuracao", () => {
@@ -26,21 +25,21 @@ app.post("/config", (req, res) => {
     });
 });
 
-// REGISTRAR GANHOS EM MASSA (Melhorado)
 app.post("/ganhos-em-massa", (req, res) => {
     const { listaGanhos } = req.body;
-    const stmt = db.prepare("INSERT OR REPLACE INTO ganhos(data, valor) VALUES(?,?)");
-    
-    db.serialize(() => {
-        listaGanhos.forEach(item => {
-            stmt.run(item.data, item.valor);
+    // Primeiro limpamos tudo para garantir que só fiquem os dados que você enviou agora
+    db.run("DELETE FROM ganhos", () => {
+        const stmt = db.prepare("INSERT INTO ganhos(data, valor) VALUES(?,?)");
+        db.serialize(() => {
+            listaGanhos.forEach(item => {
+                if(item.valor > 0) stmt.run(item.data, item.valor);
+            });
+            stmt.finalize();
+            res.send({ ok: true });
         });
-        stmt.finalize();
-        res.send({ ok: true });
     });
 });
 
-// OBTER DADOS DA SEMANA
 app.get("/semana", (req, res) => {
     db.all(`SELECT * FROM ganhos`, (err, ganhos) => {
         db.get(`SELECT * FROM configuracao LIMIT 1`, (err, config) => {
@@ -53,17 +52,16 @@ app.get("/semana", (req, res) => {
     });
 });
 
-// STATUS DO PAINEL
 app.get("/status", (req, res) => {
     db.all(`SELECT valor FROM ganhos`, (err, rows) => {
         db.get(`SELECT * FROM configuracao LIMIT 1`, (err, config) => {
             let total = rows ? rows.reduce((acc, curr) => acc + (curr.valor || 0), 0) : 0;
             let meta = config?.meta_semanal || 0;
-            let falta = meta - total;
+            let diasConfig = config?.dias_trabalhados || 5;
             res.send({
                 ganhos: total,
                 meta: meta,
-                falta: falta < 0 ? 0 : falta
+                dias: diasConfig
             });
         });
     });
