@@ -4,7 +4,6 @@ const cors = require("cors");
 const path = require("path");
 
 const app = express();
-
 app.use(express.json());
 app.use(cors());
 app.use(express.static(__dirname));
@@ -12,8 +11,15 @@ app.use(express.static(__dirname));
 const db = new sqlite3.Database("rumo.db");
 
 db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS ganhos (data TEXT PRIMARY KEY, valor REAL)`);
+    // Tabela atualizada com Uber e 99
+    db.run(`CREATE TABLE IF NOT EXISTS ganhos (
+        data TEXT PRIMARY KEY, 
+        uber REAL DEFAULT 0, 
+        p99 REAL DEFAULT 0, 
+        valor REAL DEFAULT 0
+    )`);
     db.run(`CREATE TABLE IF NOT EXISTS configuracao (meta_semanal REAL, dias_trabalhados INTEGER)`);
+    db.run(`CREATE TABLE IF NOT EXISTS dias_ativos (data TEXT PRIMARY KEY, ativo INTEGER)`);
 });
 
 app.post("/config", (req, res) => {
@@ -25,49 +31,63 @@ app.post("/config", (req, res) => {
     });
 });
 
-app.post("/ganhos-em-massa", (req, res) => {
-    const { listaGanhos } = req.body;
-    // Primeiro limpamos tudo para garantir que só fiquem os dados que você enviou agora
-    db.run("DELETE FROM ganhos", () => {
-        const stmt = db.prepare("INSERT INTO ganhos(data, valor) VALUES(?,?)");
-        db.serialize(() => {
-            listaGanhos.forEach(item => {
-                if(item.valor > 0) stmt.run(item.data, item.valor);
-            });
-            stmt.finalize();
-            res.send({ ok: true });
-        });
+app.post("/ganho-detalhado", (req, res) => {
+    const { data, uber, p99 } = req.body;
+    const total = Number(uber) + Number(p99);
+    db.run("INSERT OR REPLACE INTO ganhos(data, uber, p99, valor) VALUES(?,?,?,?)", 
+        [data, uber, p99, total], () => {
+        res.send({ ok: true });
+    });
+});
+
+app.post("/toggle-dia", (req, res) => {
+    const { data, ativo } = req.body;
+    db.run("INSERT OR REPLACE INTO dias_ativos(data, ativo) VALUES(?,?)", [data, ativo ? 1 : 0], () => {
+        res.send({ ok: true });
     });
 });
 
 app.get("/semana", (req, res) => {
     db.all(`SELECT * FROM ganhos`, (err, ganhos) => {
-        db.get(`SELECT * FROM configuracao LIMIT 1`, (err, config) => {
-            res.send({
-                ganhos: ganhos || [],
-                meta: config?.meta_semanal || 0,
-                dias: config?.dias_trabalhados || 5
+        db.all(`SELECT * FROM dias_ativos`, (err, ativos) => {
+            db.get(`SELECT * FROM configuracao LIMIT 1`, (err, config) => {
+                res.send({
+                    ganhos: ganhos || [],
+                    ativos: ativos || [],
+                    meta: config?.meta_semanal || 0,
+                    dias: config?.dias_trabalhados || 5
+                });
             });
         });
     });
 });
 
 app.get("/status", (req, res) => {
-    db.all(`SELECT valor FROM ganhos`, (err, rows) => {
+    db.all(`SELECT * FROM ganhos`, (err, rows) => {
         db.get(`SELECT * FROM configuracao LIMIT 1`, (err, config) => {
-            let total = rows ? rows.reduce((acc, curr) => acc + (curr.valor || 0), 0) : 0;
-            let meta = config?.meta_semanal || 0;
-            let diasConfig = config?.dias_trabalhados || 5;
-            res.send({
-                ganhos: total,
-                meta: meta,
-                dias: diasConfig
-            });
+            const hoje = new Date();
+            const diaDaSemana = hoje.getDay();
+            const diff = hoje.getDate() - diaDaSemana + (diaDaSemana === 0 ? -6 : 1);
+            const segundaFeira = new Date(hoje.setDate(diff));
+            segundaFeira.setHours(0,0,0,0);
+
+            let totalSemana = 0;
+            if (rows) {
+                totalSemana = rows.reduce((acc, curr) => {
+                    const dataGanho = new Date(curr.data + "T00:00:00");
+                    return dataGanho >= segundaFeira ? acc + (curr.valor || 0) : acc;
+                }, 0);
+            }
+            res.send({ ganhos: totalSemana, meta: config?.meta_semanal || 0, dias: config?.dias_trabalhados || 5 });
         });
     });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`RUMO rodando em http://localhost:${PORT}`);
+app.get("/historico-geral", (req, res) => {
+    db.all(`SELECT * FROM ganhos ORDER BY data DESC`, (err, rows) => {
+        res.send(rows || []);
+    });
 });
+
+const PORT = 3000;
+app.listen(PORT, () => console.log(`RUMO rodando em http://localhost:${PORT}`));

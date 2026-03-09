@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>RUMO • Histórico</title>
+    <link rel="stylesheet" href="rumo.css">
+    <style>
+        .item-hist { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .data-hist { font-weight: bold; color: var(--accent); }
+        .apps-hist { font-size: 0.8rem; color: var(--text-dim); }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Histórico de Ganhos</h1>
+    <div class="card" id="lista-historico" style="text-align: left; padding: 0;">
+        </div>
+    <div style="text-align: center; margin-top: 30px;">
+        <button onclick="window.location.href='index.html'">Voltar ao Menu</button>
+    </div>
+</div>
+<script>
+    fetch("/historico-geral").then(r => r.json()).then(dados => {
+        let html = "";
+        dados.forEach(d => {
+            let dataF = d.data.split('-').reverse().join('/');
+            html += `
+                <div class="item-hist">
+                    <div>
+                        <div class="data-hist">${dataF}</div>
+                        <div class="apps-hist">Uber: R$ ${d.uber.toFixed(2)} | 99: R$ ${d.p99.toFixed(2)}</div>
+                    </div>
+                    <div style="font-size: 1.2rem; font-weight: bold;">R$ ${d.valor.toFixed(2)}</div>
+                </div>`;
+        });
+        document.getElementById("lista-historico").innerHTML = html || "<p style='padding:20px'>Nenhum registo encontrado.</p>";
+    });
+</script>
+</body>
+</html>

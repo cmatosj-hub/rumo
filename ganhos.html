@@ -2,20 +2,60 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>RUMO • Registrar Ganhos</title>
+    <title>RUMO • Registro Detalhado</title>
     <link rel="stylesheet" href="rumo.css">
-</head>
-<body id="corpo">
+    <style>
+        .config-header { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px dashed var(--accent); }
+        
+        /* Ajuste para as sub-colunas */
+        .input-duplo { display: flex; gap: 8px; justify-content: center; align-items: center; }
+        .campo-app { display: flex; flex-direction: column; align-items: center; }
+        .label-app { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; }
+        
+        .input-duplo input { 
+            width: 80px !important; 
+            padding: 8px; 
+            text-align: center; 
+            font-size: 0.9rem;
+            border-radius: 8px;
+        }
 
+        .mini-barra-container { width: 100%; height: 6px; background: rgba(0,0,0,0.2); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+        .mini-barra { height: 100%; transition: width 0.4s ease; }
+        
+        .nav-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 30px; }
+        .dia-off { opacity: 0.4; filter: grayscale(1); }
+        .meta-valor { color: var(--accent); font-weight: bold; font-size: 0.9rem; }
+        
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--success); color: white; padding: 10px 20px; border-radius: 20px; font-size: 0.8rem; opacity: 0; transition: 0.3s; z-index: 100; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<div id="toast">Dados sincronizados! ✅</div>
 <div class="theme-switch" onclick="toggleTema()">🌓</div>
 
 <div class="container">
-    <h1>Controle Semanal</h1>
+    <h1>RUMO</h1>
+
+    <div class="config-header">
+        <div>
+            <label style="font-size: 0.75rem;">META SEMANAL</label><br>
+            <input id="meta_in" type="number" onchange="salvarConfig()">
+        </div>
+        <div>
+            <label style="font-size: 0.75rem;">DIAS DE TRABALHO</label><br>
+            <select id="dias_in" onchange="salvarConfig()">
+                <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                <option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="7">7</option>
+            </select>
+        </div>
+    </div>
 
     <div class="topcards">
-        <div class="card"><span>Meta Semanal</span><h2 id="meta">R$ 0</h2></div>
         <div class="card"><span>Total Ganho</span><h2 id="total">R$ 0</h2></div>
-        <div class="card"><span>Progresso</span><h2 id="progresso">0%</h2></div>
+        <div class="card"><span>Falta</span><h2 id="falta" style="color: var(--danger);">R$ 0</h2></div>
+        <div class="card"><span>Sugerido p/ hoje</span><h2 id="sugerido" style="color: var(--accent);">R$ 0</h2></div>
     </div>
 
     <div class="card">
@@ -24,124 +64,151 @@
                 <tr>
                     <th>Dia</th>
                     <th>Ativo</th>
-                    <th>Ganho (R$)</th>
-                    <th>Meta Ajustada</th>
-                    <th>Status</th>
+                    <th>Ganhos por App (R$)</th>
+                    <th>Total Dia</th>
+                    <th>Meta Diária</th>
                 </tr>
             </thead>
             <tbody id="tabela"></tbody>
         </table>
     </div>
 
-    <div style="text-align: center; margin-top: 30px;">
-        <button onclick="salvar()" style="font-size: 1.2rem; padding: 15px 40px;">💾 Salvar Tudo</button>
-        <br><br>
-        <a href="index.html" style="color: var(--text-dim); text-decoration: none;">← Voltar ao Início</a>
+    <div class="nav-buttons">
+        <button onclick="window.location.href='index.html'" style="background: var(--card-bg); color: var(--text-main); border: 1px solid var(--text-dim);">← Menu</button>
+        <button onclick="window.location.href='historico.html'" style="background: var(--card-bg); color: var(--text-main); border: 1px solid var(--text-dim);">📜 Histórico</button>
+        <button onclick="window.location.href='painel.html'" style="background: var(--success);">Ver Painel 📊</button>
     </div>
 </div>
 
 <script>
-    const dias = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"];
-    let ganhos = {};
-    let diasAtivos = { SEG: true, TER: true, QUA: true, QUI: true, SEX: true, SAB: false, DOM: false };
-    let metaSemanal = 0;
+    const nomesDias = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"];
+    let ganhosDB = {}, diasAtivos = {}, metaS = 0, diasT = 5, datasDaSemana = [];
 
-    function toggleTema() {
-        document.body.classList.toggle('light-mode');
-        localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+    function toggleTema() { 
+        document.body.classList.toggle('light-mode'); 
+        localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark'); 
     }
-
     if(localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');
 
+    function showToast() { 
+        const t = document.getElementById("toast"); 
+        t.style.opacity = "1"; 
+        setTimeout(() => t.style.opacity = "0", 2000); 
+    }
+
+    function calcularDatas() {
+        datasDaSemana = []; 
+        let hoje = new Date(); 
+        let diaSem = hoje.getDay();
+        let diff = hoje.getDate() - diaSem + (diaSem === 0 ? -6 : 1);
+        let segunda = new Date(hoje.setDate(diff));
+        for(let i=0; i<7; i++) {
+            let d = new Date(segunda); 
+            d.setDate(segunda.getDate() + i);
+            let iso = d.toISOString().split('T')[0];
+            datasDaSemana.push(iso);
+            if(diasAtivos[iso] === undefined) diasAtivos[iso] = i < 5;
+        }
+    }
+
     function carregar() {
-        fetch("/semana")
-            .then(r => r.json())
-            .then(data => {
-                metaSemanal = data.meta;
-                document.getElementById("meta").innerText = "R$ " + metaSemanal;
-                data.ganhos.forEach(g => { ganhos[g.data] = g.valor; });
-                render();
+        fetch("/semana").then(r => r.json()).then(data => {
+            metaS = data.meta; 
+            diasT = data.dias;
+            document.getElementById("meta_in").value = metaS;
+            document.getElementById("dias_in").value = diasT;
+            
+            // Agora o banco retorna objetos com uber e p99
+            ganhosDB = {};
+            data.ganhos.forEach(g => { 
+                ganhosDB[g.data] = { uber: g.uber || 0, p99: g.p99 || 0, total: g.valor || 0 }; 
             });
+            
+            data.ativos.forEach(a => { diasAtivos[a.data] = a.ativo === 1; });
+            calcularDatas();
+            render();
+        });
     }
 
     function render() {
-        let html = "";
-        let totalAcumulado = 0;
+        let html = "", totalGeral = 0, diasRestantesAtivos = 0;
         
-        // 1. Calcular total já ganho e quantos dias ativos restam sem valor preenchido
-        let totalJaGanho = 0;
-        let diasRestantesAtivos = 0;
-
-        dias.forEach(d => {
-            if (ganhos[d]) totalJaGanho += Number(ganhos[d]);
-            if (diasAtivos[d] && !ganhos[d]) diasRestantesAtivos++;
+        datasDaSemana.forEach(dt => {
+            if(ganhosDB[dt]) totalGeral += Number(ganhosDB[dt].total);
+            if(diasAtivos[dt] && (!ganhosDB[dt] || ganhosDB[dt].total === 0)) diasRestantesAtivos++;
         });
 
-        // 2. Calcular quanto falta e qual a nova meta para os dias restantes
-        let faltaParaMeta = metaSemanal - totalJaGanho;
-        let metaAjustada = diasRestantesAtivos > 0 ? faltaParaMeta / diasRestantesAtivos : 0;
+        let falta = metaS - totalGeral;
+        let metaAjustada = diasRestantesAtivos > 0 ? (falta / diasRestantesAtivos) : 0;
+        let metaIdealOriginal = metaS / diasT;
 
-        dias.forEach(d => {
-            let ativo = diasAtivos[d];
-            let ganho = ganhos[d] || "";
-            let metaExibida = "";
-
-            if (!ativo) {
-                metaExibida = "-";
-            } else {
-                // Se já preenchi, a meta era a ajustada naquele momento (ou a base)
-                // Para simplificar, mostramos a meta que o usuário deve perseguir nos dias vazios
-                metaExibida = ganho ? "Batida" : "R$ " + Math.max(0, metaAjustada).toFixed(0);
-            }
-
-            let status = "";
-            if (ganho && ativo) {
-                // Status baseado na meta proporcional simples (Meta total / dias ativos)
-                let metaProporcional = metaSemanal / Object.values(diasAtivos).filter(v=>v).length;
-                if (ganho >= metaProporcional) status = "<b style='color:var(--success)'>✔</b>";
-                else status = "<b style='color:var(--danger)'>✖</b>";
-            }
+        datasDaSemana.forEach((dt, i) => {
+            let g = ganhosDB[dt] || { uber: 0, p99: 0, total: 0 };
+            let ativo = diasAtivos[dt];
+            let formatData = dt.split('-').reverse().slice(0,2).join('/');
+            
+            let pctDia = metaIdealOriginal > 0 ? (g.total / metaIdealOriginal) * 100 : 0;
+            let corBarra = pctDia >= 100 ? "var(--success)" : (pctDia >= 80 ? "var(--warning)" : "var(--danger)");
+            let metaCol = ativo ? (g.total > 0 ? "Batida" : "R$ " + Math.max(0, metaAjustada).toFixed(0)) : "-";
 
             html += `
-                <tr>
-                    <td><b>${d}</b></td>
-                    <td><input type="checkbox" ${ativo ? "checked" : ""} onclick="toggle('${d}')"></td>
+                <tr class="${ativo ? '' : 'dia-off'}">
+                    <td><b>${nomesDias[i]}</b><br><small style="color:var(--text-dim)">${formatData}</small></td>
+                    <td><input type="checkbox" ${ativo ? 'checked' : ''} onclick="toggleDia('${dt}')"></td>
                     <td>
-                        <input id="g_${d}" type="number" value="${ganho}" onchange="atualizarLocal('${d}', this.value)">
+                        <div class="input-duplo">
+                            <div class="campo-app">
+                                <span class="label-app">Uber</span>
+                                <input type="number" value="${g.uber || ''}" onchange="salvarDetalhado('${dt}', this.value, ${g.p99})" placeholder="0" ${ativo ? '' : 'disabled'}>
+                            </div>
+                            <div class="campo-app">
+                                <span class="label-app">99</span>
+                                <input type="number" value="${g.p99 || ''}" onchange="salvarDetalhado('${dt}', ${g.uber}, this.value)" placeholder="0" ${ativo ? '' : 'disabled'}>
+                            </div>
+                        </div>
                     </td>
-                    <td style="color:var(--accent)">${metaExibida}</td>
-                    <td>${status}</td>
+                    <td>
+                        <b style="font-size:1.1rem">R$ ${g.total.toFixed(0)}</b>
+                        <div class="mini-barra-container">
+                            <div class="mini-barra" style="width:${ativo ? Math.min(pctDia,100) : 0}%; background:${corBarra}"></div>
+                        </div>
+                    </td>
+                    <td class="meta-valor">${metaCol}</td>
                 </tr>`;
         });
 
         document.getElementById("tabela").innerHTML = html;
-        document.getElementById("total").innerText = "R$ " + totalJaGanho;
-        let progresso = metaSemanal > 0 ? ((totalJaGanho / metaSemanal) * 100).toFixed(0) : 0;
-        document.getElementById("progresso").innerText = progresso + "%";
+        document.getElementById("total").innerText = "R$ " + totalGeral.toFixed(2);
+        document.getElementById("falta").innerText = "R$ " + (falta > 0 ? falta.toFixed(2) : "0.00");
+        document.getElementById("sugerido").innerText = "R$ " + (metaAjustada > 0 ? metaAjustada.toFixed(2) : "0.00");
     }
 
-    function atualizarLocal(dia, valor) {
-        ganhos[dia] = valor;
-        render(); // Re-calcula a meta dos outros dias instantaneamente
+    function salvarDetalhado(data, uber, p99) {
+        const corpo = { data, uber: Number(uber), p99: Number(p99) };
+        fetch("/ganho-detalhado", { 
+            method: "POST", 
+            headers: {"Content-Type":"application/json"}, 
+            body: JSON.stringify(corpo) 
+        }).then(() => { carregar(); showToast(); });
     }
 
-    function toggle(d) {
-        diasAtivos[d] = !diasAtivos[d];
-        render();
+    function toggleDia(data) {
+        diasAtivos[data] = !diasAtivos[data];
+        fetch("/toggle-dia", { 
+            method: "POST", 
+            headers: {"Content-Type":"application/json"}, 
+            body: JSON.stringify({ data, ativo: diasAtivos[data] }) 
+        }).then(() => { render(); showToast(); });
     }
 
-    function salvar() {
-        let lista = [];
-        dias.forEach(d => {
-            let v = document.getElementById("g_" + d).value;
-            if (v !== "") lista.push({ data: d, valor: Number(v) });
-        });
-
-        fetch("/ganhos-em-massa", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ listaGanhos: lista })
-        }).then(() => alert("Dados salvos!"));
+    function salvarConfig() {
+        metaS = parseFloat(document.getElementById("meta_in").value) || 0;
+        diasT = parseInt(document.getElementById("dias_in").value);
+        fetch("/config", { 
+            method: "POST", 
+            headers: {"Content-Type":"application/json"}, 
+            body: JSON.stringify({ meta: metaS, dias: diasT }) 
+        }).then(() => { render(); showToast(); });
     }
 
     carregar();
