@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>RUMO • Controle semanal</title>
+
+<link rel="stylesheet" href="rumo.css">
+
+<style>
+
+.container{
+width:900px;
+margin:auto;
+}
+
+.topcards{
+margin-bottom:20px;
+}
+
+.card{
+display:inline-block;
+width:28%;
+background:white;
+padding:15px;
+margin:5px;
+border-radius:8px;
+box-shadow:0 2px 4px rgba(0,0,0,0.08);
+text-align:center;
+}
+
+.card h2{
+margin:5px;
+}
+
+table{
+width:100%;
+background:white;
+border-collapse:collapse;
+box-shadow:0 2px 6px rgba(0,0,0,0.08);
+}
+
+th{
+background:#fafafa;
+padding:10px;
+border-bottom:1px solid #ddd;
+}
+
+td{
+padding:10px;
+border-bottom:1px solid #eee;
+text-align:center;
+}
+
+input{
+width:80px;
+padding:6px;
+text-align:center;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+button{
+padding:6px 12px;
+border-radius:6px;
+border:none;
+cursor:pointer;
+}
+
+.edit{
+background:none;
+font-size:16px;
+}
+
+.toggle{
+font-size:18px;
+cursor:pointer;
+}
+
+.status-ok{color:green;font-weight:bold;}
+.status-warn{color:#d8a100;font-weight:bold;}
+.status-bad{color:red;font-weight:bold;}
+
+.savebtn{
+margin-top:20px;
+font-size:16px;
+padding:10px 20px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Controle Semanal</h1>
+
+<div class="topcards">
+
+<div class="card">
+Meta semanal
+<h2 id="meta">0</h2>
+</div>
+
+<div class="card">
+Total ganho
+<h2 id="total">0</h2>
+</div>
+
+<div class="card">
+Progresso
+<h2 id="progresso">0%</h2>
+</div>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Dia</th>
+<th>Ativo</th>
+<th>Ganho</th>
+<th>Meta</th>
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+<tbody id="tabela"></tbody>
+
+</table>
+
+<center>
+
+<button class="savebtn" onclick="salvar()">Salvar tudo</button>
+
+</center>
+
+</div>
+
+<script>
+
+const dias = ["SEG","TER","QUA","QUI","SEX","SAB","DOM"]
+
+let ganhos={}
+let diasAtivos={
+SEG:true,
+TER:true,
+QUA:true,
+QUI:true,
+SEX:true,
+SAB:false,
+DOM:false
+}
+
+let metaSemanal=0
+
+function carregar(){
+
+fetch("/semana")
+
+.then(r=>r.json())
+
+.then(data=>{
+
+metaSemanal=data.meta
+
+document.getElementById("meta").innerText="R$ "+metaSemanal
+
+data.ganhos.forEach(g=>{
+ganhos[g.data]=g.valor
+})
+
+render()
+
+})
+
+}
+
+function calcularMetaDia(){
+
+let ativos=0
+
+dias.forEach(d=>{
+if(diasAtivos[d]) ativos++
+})
+
+return metaSemanal/ativos
+
+}
+
+function render(){
+
+let html=""
+let total=0
+
+const metaBase=calcularMetaDia()
+
+dias.forEach(d=>{
+
+let ativo=diasAtivos[d]
+
+let ganho=ganhos[d]||""
+
+let meta=ativo?metaBase.toFixed(0):"-"
+
+if(ganho) total+=Number(ganho)
+
+let status=""
+
+if(ganho && ativo){
+
+if(ganho>=meta) status="<span class='status-ok'>✔</span>"
+else if(ganho>=meta*0.8) status="<span class='status-warn'>⚠</span>"
+else status="<span class='status-bad'>✖</span>"
+
+}
+
+html+=`
+
+<tr>
+
+<td>${d}</td>
+
+<td>
+<span class="toggle" onclick="toggle('${d}')">
+${ativo?"✔":"✖"}
+</span>
+</td>
+
+<td>
+
+<input id="g_${d}" value="${ganho}" disabled>
+
+<button class="edit" onclick="editar('g_${d}')">✏</button>
+
+</td>
+
+<td>${meta}</td>
+
+<td>${status}</td>
+
+</tr>
+
+`
+
+})
+
+document.getElementById("tabela").innerHTML=html
+
+document.getElementById("total").innerText="R$ "+total
+
+let progresso=((total/metaSemanal)*100).toFixed(0)
+
+document.getElementById("progresso").innerText=progresso+"%"
+
+}
+
+function editar(id){
+
+let el=document.getElementById(id)
+
+el.disabled=false
+el.focus()
+
+}
+
+function toggle(d){
+
+diasAtivos[d]=!diasAtivos[d]
+
+render()
+
+}
+
+function salvar(){
+
+dias.forEach(d=>{
+
+let ganho=document.getElementById("g_"+d).value
+
+if(ganho){
+
+fetch("/ganho",{
+
+method:"POST",
+
+headers:{"Content-Type":"application/json"},
+
+body:JSON.stringify({
+
+data:d,
+valor:Number(ganho)
+
+})
+
+})
+
+}
+
+})
+
+alert("Salvo")
+
+}
+
+carregar()
+
+</script>
+
+</body>
+
+</html>

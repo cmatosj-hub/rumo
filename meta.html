@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<link rel="stylesheet" href="rumo.css">
+
+<title>Meta semanal</title>
+
+</head>
+
+<body>
+
+<h1>Configuração da Semana</h1>
+
+<div class="card">
+
+<label>Meta semanal</label>
+
+<input id="meta" type="number">
+
+<br><br>
+
+<label>Dias trabalhados</label>
+
+<select id="dias">
+
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5" selected>5</option>
+<option value="6">6</option>
+<option value="7">7</option>
+
+</select>
+
+<br><br>
+
+<button onclick="salvar()">Salvar</button>
+
+</div>
+
+<script>
+
+function salvar(){
+
+const meta = document.getElementById("meta").value
+const dias = document.getElementById("dias").value
+
+fetch("/config",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+meta:parseFloat(meta),
+dias:parseInt(dias)
+
+})
+
+}).then(()=>{
+
+alert("Configuração salva")
+
+})
+
+}
+
+</script>
+
+</body>
+</html>

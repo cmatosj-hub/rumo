@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<link rel="stylesheet" href="rumo.css">
+
+<title>Painel</title>
+
+</head>
+
+<body class="painel">
+
+<h1>RUMO</h1>
+
+<div id="ganhos">0</div>
+
+<div id="meta">0</div>
+
+<div id="falta">0</div>
+
+<div class="barra">
+
+<div id="progresso"></div>
+
+</div>
+
+<script>
+
+function atualizar(){
+
+fetch("/status")
+
+.then(r=>r.json())
+
+.then(d=>{
+
+document.getElementById("ganhos").innerText =
+"Ganhos: R$ "+d.ganhos
+
+document.getElementById("meta").innerText =
+"Meta: R$ "+d.meta
+
+document.getElementById("falta").innerText =
+"Faltam: R$ "+d.falta
+
+let porcentagem = (d.ganhos/d.meta)*100
+
+if(porcentagem>100) porcentagem=100
+
+const barra = document.getElementById("progresso")
+
+barra.style.width = porcentagem+"%"
+
+if(porcentagem < 80){
+
+barra.className="vermelho"
+
+}else if(porcentagem < 100){
+
+barra.className="amarelo"
+
+}else{
+
+barra.className="verde"
+
+}
+
+})
+
+}
+
+setInterval(atualizar,5000)
+
+atualizar()
+
+</script>
+
+</body>
+
+</html>
