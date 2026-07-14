@@ -928,3 +928,755 @@ Regras de negócio, cálculos e transações não deverão ser implementados nos
 O acesso a Node.js, sistema de arquivos e banco de dados deverá permanecer fora do processo de renderização.
 
 A arquitetura deverá permitir que os mesmos casos de uso sejam adaptados futuramente para uma API HTTP ou cloud.
+
+# DECISÃO 035
+
+## Título
+
+Regime financeiro híbrido gerencial no MVP.
+
+## Data
+
+13/07/2026
+
+## Motivo
+
+O RUMO precisa demonstrar tanto o desempenho operacional do motorista quanto a movimentação efetiva de recursos.
+
+O regime de caixa isolado concentraria receitas no momento do repasse bancário, mesmo quando o trabalho ocorreu em outro dia.
+
+O regime de competência completo aumentaria a complexidade do MVP e aproximaria o sistema de uma contabilidade fiscal formal, que não é seu objetivo.
+
+## Impacto
+
+O MVP utilizará um modelo híbrido gerencial.
+
+O resultado operacional será apurado pela data operacional ou competência do fato.
+
+O fluxo de caixa será apurado pelos movimentos de conta efetivamente postados.
+
+O saldo de cada conta será reconstruído exclusivamente a partir dos movimentos válidos dessa conta.
+
+Receitas de aplicativos serão reconhecidas na data em que o trabalho ocorreu.
+
+Quando a receita permanecer sob custódia do aplicativo, o fechamento diário poderá creditar uma conta financeira correspondente ao aplicativo.
+
+O posterior repasse da conta do aplicativo para uma conta bancária será uma transferência interna.
+
+Transferências internas não serão consideradas receita nem despesa operacional.
+
+A data operacional e a data de postagem financeira poderão ser diferentes.
+
+O modelo híbrido gerencial não representa contabilidade fiscal formal e não substitui obrigações contábeis ou tributárias do usuário.
+
+As regras de competência, apropriação e rateio deverão ser especificadas em `06_CALCULOS.md` antes da implementação dos indicadores correspondentes.
+
+# DECISÃO 036
+
+## Título
+
+Separação entre lançamento financeiro e movimento de conta.
+
+## Data
+
+13/07/2026
+
+## Motivo
+
+Um fato financeiro e seu efeito sobre uma conta representam conceitos diferentes.
+
+Misturar esses conceitos impediria transferências com múltiplos movimentos, dificultaria reversões e aumentaria o risco de dupla contagem.
+
+## Impacto
+
+Lançamento financeiro representará o fato econômico ou financeiro.
+
+Movimento de conta representará o efeito de um lançamento sobre o saldo de uma conta.
+
+Um lançamento poderá produzir um ou mais movimentos de conta.
+
+Receitas normalmente produzirão movimentos de crédito.
+
+Despesas normalmente produzirão movimentos de débito.
+
+Transferências internas produzirão, na mesma operação atômica, um movimento de débito na conta de origem e um movimento de crédito na conta de destino.
+
+O saldo de cada conta será reconstruído exclusivamente a partir dos movimentos válidos.
+
+Saldo inicial diferente de zero será representado por movimento de abertura auditado.
+
+Ajustes de saldo serão representados por lançamentos e movimentos próprios, nunca pela edição direta de um campo de saldo.
+
+Abastecimentos, manutenções, impostos, multas, documentos e outros detalhes especializados deverão referenciar o lançamento financeiro correspondente.
+
+Detalhes especializados não poderão produzir um segundo custo independente utilizado em saldos, indicadores ou relatórios.
+
+Lançamentos, movimentos e detalhes especializados relacionados deverão ser criados, corrigidos e cancelados de maneira transacionalmente consistente.
+
+# DECISÃO 037
+
+## Título
+
+Estados próprios, correção auditada, cancelamento lógico e reversão financeira.
+
+## Data
+
+13/07/2026
+
+## Motivo
+
+Entidades diferentes possuem ciclos de vida diferentes.
+
+Utilizar um status genérico para todas as tabelas produziria transições ambíguas e dificultaria a proteção de dados financeiros confirmados.
+
+Correções e cancelamentos também precisam preservar os efeitos históricos sem corromper saldos.
+
+## Impacto
+
+Cada agregado possuirá estados próprios definidos em suas regras e no modelo de dados.
+
+Não haverá um status genérico com o mesmo significado para todas as tabelas.
+
+Os enums específicos serão formalizados antes da implementação de cada agregado.
+
+Registros confirmados não poderão ser modificados silenciosamente.
+
+Registros cancelados não poderão voltar diretamente ao estado confirmado.
+
+Quando for necessário recriar um fato cancelado, deverá ser criado um novo registro com nova identidade e vínculo auditável quando pertinente.
+
+Estados derivados exclusivamente de datas, como `vencido`, `a vencer` ou `em dia`, não serão persistidos como estados definitivos. Eles serão calculados a partir das datas válidas.
+
+Cancelamento invalidará o fato de negócio sem apagá-lo.
+
+Efeitos financeiros já postados serão neutralizados por movimentos de reversão.
+
+Movimentos originais permanecerão preservados.
+
+Reversões serão vinculadas aos movimentos ou lançamentos de origem.
+
+Correções materiais de valor, conta ou data financeira exigirão motivo e auditoria.
+
+Correções financeiras deverão neutralizar o efeito anterior e aplicar o efeito corrigido.
+
+Campos meramente descritivos poderão seguir fluxo de edição auditada sem reversão financeira, desde que não alterem saldos, resultado, período ou classificação.
+
+Exclusão física de dados financeiros continuará proibida.
+
+Cancelamentos, correções e reversões relacionados a dados especializados deverão manter consistentes o lançamento, os movimentos e o registro especializado.
+
+# DECISÃO 038
+
+## Título
+
+Criação guiada da conta financeira padrão.
+
+## Data
+
+13/07/2026
+
+## Motivo
+
+Os fluxos financeiros do MVP exigem pelo menos uma conta, mas criar silenciosamente uma conta fictícia poderia produzir saldos e relatórios sem correspondência com a realidade do usuário.
+
+## Impacto
+
+O onboarding financeiro incluirá a criação guiada de uma conta principal.
+
+O usuário escolherá o tipo da conta e confirmará seu nome.
+
+Os tipos iniciais poderão incluir:
+
+- dinheiro físico;
+- conta bancária;
+- carteira digital;
+- conta de aplicativo.
+
+O sistema poderá sugerir o nome `Conta principal`, mas não confirmará a conta sem ação explícita do usuário.
+
+Nenhuma conta financeira fictícia será criada silenciosamente.
+
+O saldo inicial será opcional.
+
+Saldo inicial diferente de zero produzirá um movimento auditado de abertura.
+
+A conta principal será inicialmente utilizada como conta padrão para novos lançamentos.
+
+O usuário poderá alterar a conta padrão posteriormente.
+
+Uma conta inativa não poderá permanecer como conta padrão.
+
+Contas adicionais serão opcionais e não bloquearão o onboarding.
+
+# DECISÃO 039
+
+## Título
+
+Destino externo para retirada pessoal no MVP.
+
+## Data
+
+13/07/2026
+
+## Motivo
+
+Retirada pessoal reduz os recursos disponíveis para a operação, mas não representa custo necessário para produzir receita.
+
+Uma contrapartida identificável é necessária para explicar a saída sem criar artificialmente uma conta pessoal com saldo interno.
+
+## Impacto
+
+A contrapartida da retirada pessoal no MVP será um destino externo identificado como `Uso pessoal`.
+
+O destino externo não possuirá saldo financeiro interno.
+
+A retirada pessoal deverá indicar a conta operacional de origem.
+
+A retirada não será classificada como receita.
+
+A retirada não será classificada como despesa operacional.
+
+A retirada não integrará o resultado operacional.
+
+A retirada reduzirá o saldo da conta de origem por meio de movimento de débito.
+
+A retirada aparecerá separadamente no fluxo financeiro e nos relatórios.
+
+O destino externo permitirá futura evolução para contas pessoais completas sem exigir que o MVP controle patrimônio pessoal detalhado.
+
+A futura substituição do destino externo por conta pessoal interna exigirá nova decisão.
+
+# DECISÃO 040
+
+## Título
+
+Exclusividade entre receita individual e fechamento diário.
+
+## Data
+
+13/07/2026
+
+## Motivo
+
+O usuário poderá preferir registrar apenas o total diário de cada aplicativo.
+
+Permitir simultaneamente receitas individuais e fechamento diário para a mesma cobertura provocaria dupla contagem.
+
+## Impacto
+
+O fechamento diário será o fluxo recomendado de registro de receitas operacionais.
+
+O registro de receita individual continuará opcional.
+
+Para uma mesma cobertura, o usuário utilizará receita individual ou fechamento diário.
+
+A cobertura considerará, no mínimo:
+
+- proprietário;
+- origem da receita;
+- data operacional.
+
+O veículo poderá participar da cobertura quando informado.
+
+Quando o usuário optar por fechamento consolidado sem veículo, esse fechamento cobrirá a origem e a data operacional sem divisão por veículo.
+
+Não será permitido misturar, para a mesma cobertura, fechamento consolidado e receitas individuais ou fechamentos por veículo.
+
+Não haverá consolidação automática silenciosa.
+
+Para trocar o modo de registro, o usuário deverá cancelar ou corrigir os registros conflitantes por fluxo auditado.
+
+O sistema deverá verificar conflitos antes da confirmação.
+
+Bônus, gorjetas e promoções poderão ser registrados como componentes da receita operacional, desde que não sejam somados novamente fora do total confirmado.
+
+A regra completa de cobertura, unicidade e critérios de aceite deverá ser documentada antes da implementação do módulo de receitas.
+
+# DECISÃO 041
+
+## Título
+
+Terminologia financeira padronizada e catálogo formal de cálculos.
+
+## Data
+
+13/07/2026
+
+## Motivo
+
+Termos como lucro, resultado, receita e fluxo de caixa aparecem com significados incompletos ou sobrepostos.
+
+Sem definições formais, diferentes módulos poderiam apresentar números incompatíveis.
+
+## Impacto
+
+O projeto manterá um catálogo formal de cálculos em `06_CALCULOS.md`.
+
+A terminologia inicial será:
+
+- receita operacional;
+- despesa operacional variável;
+- despesa operacional fixa;
+- resultado operacional;
+- lucro bruto;
+- lucro líquido gerencial;
+- fluxo de caixa;
+- saldo.
+
+Receita operacional representará valores gerados pela atividade de motorista conforme o regime financeiro aprovado.
+
+Despesa operacional variável representará custo operacional cuja ocorrência ou valor varia com a atividade, conforme classificação aprovada.
+
+Despesa operacional fixa representará custo operacional não diretamente proporcional ao volume diário de atividade, conforme classificação aprovada.
+
+Lucro bruto será calculado a partir da receita operacional menos as despesas operacionais variáveis reconhecidas no mesmo escopo.
+
+Resultado operacional considerará receita operacional, despesas operacionais variáveis, despesas operacionais fixas e outros componentes operacionais expressamente aprovados.
+
+Lucro líquido gerencial considerará o resultado operacional e os componentes não operacionais que o catálogo determinar, sem incluir transferências internas, retiradas pessoais ou movimentações patrimoniais como receita ou despesa.
+
+Fluxo de caixa representará entradas e saídas efetivamente postadas, com transferências internas neutralizadas na visão consolidada.
+
+Saldo representará créditos menos débitos válidos de uma conta, incluindo movimentos de abertura, ajustes e reversões.
+
+As fórmulas completas, rateios, filtros, períodos, arredondamentos, tratamento de dados ausentes e exemplos serão definidos em `06_CALCULOS.md`.
+
+Nenhum indicador será implementado antes da aprovação de sua fórmula e critérios de aceite.
+
+# DECISÃO 042
+
+## Título
+
+Timestamps em UTC, timezone efetivo e data operacional histórica.
+
+## Data
+
+13/07/2026
+
+## Motivo
+
+Timestamps técnicos, datas operacionais e datas civis possuem significados diferentes.
+
+Utilizar somente o timezone atual do usuário poderia reagrupar silenciosamente lançamentos e relatórios históricos.
+
+## Impacto
+
+Timestamps técnicos serão armazenados em UTC.
+
+O timezone efetivo utilizado no registro será preservado quando for relevante para interpretação histórica.
+
+A data operacional será persistida separadamente do timestamp técnico.
+
+Alterações futuras no timezone configurado pelo usuário não modificarão a data operacional histórica.
+
+Agrupamentos diários utilizarão a data operacional aprovada.
+
+Datas civis de vencimento poderão ser armazenadas sem horário quando não representarem um instante específico.
+
+Conversões para apresentação ocorrerão em utilidades centralizadas.
+
+A interface não realizará conversões temporais que alterem regras de negócio.
+
+A regra específica para jornadas atravessando a meia-noite permanecerá pendente até a decisão correspondente ao módulo de jornadas.
+
+# DECISÃO 043
+
+## Título
+
+Escopo por usuário desde a primeira versão.
+
+## Data
+
+13/07/2026
+
+## Motivo
+
+Embora o MVP seja local e monousuário, o projeto prevê futura sincronização, cloud e múltiplos usuários.
+
+Adicionar ownership apenas posteriormente exigiria migration transversal em praticamente todas as entidades.
+
+## Impacto
+
+As entidades relevantes do MVP possuirão `user_id` desde a primeira migration.
+
+Será criado um perfil local proprietário dos dados.
+
+Todos os casos de uso operarão em contexto explícito de usuário.
+
+Consultas e alterações deverão filtrar o proprietário correspondente.
+
+Entidades compartilhadas exclusivamente pelo sistema poderão ser dispensadas de `user_id` quando isso for definido no modelo de dados.
+
+O MVP continuará permitindo apenas um usuário local ativo na aplicação.
+
+A presença de `user_id` não implicará autenticação remota, múltiplas sessões ou interface multiusuário no MVP.
+
+A decisão prepara isolamento futuro sem implementar sincronização ou cloud antecipadamente.
+
+Constraints e índices relevantes deverão considerar `user_id`.
+
+# DECISÃO 044
+
+## Título
+
+Auditoria append-only obrigatória.
+
+## Data
+
+13/07/2026
+
+## Motivo
+
+A integridade histórica exige registrar alterações relevantes sem permitir que o próprio fluxo auditado modifique ou apague sua evidência.
+
+## Impacto
+
+A auditoria utilizará log append-only.
+
+Cada evento de auditoria conterá, no mínimo:
+
+- entidade;
+- identificador da entidade;
+- ação;
+- ator;
+- timestamp UTC;
+- valores anteriores;
+- valores posteriores;
+- motivo quando exigido;
+- `correlationId`;
+- origem da alteração.
+
+A auditoria poderá registrar também data operacional e metadados técnicos necessários para explicar o evento.
+
+As origens poderão incluir:
+
+- interface;
+- caso de uso;
+- sistema;
+- migration;
+- restauração;
+- integração futura.
+
+Logs de auditoria não poderão ser editados ou apagados pelos fluxos normais da aplicação.
+
+Cancelamentos, reversões, ajustes de saldo e correções financeiras materiais sempre exigirão motivo.
+
+Correções de jornadas encerradas, ajustes de odômetro, troca de painel e restauração de backup também exigirão motivo.
+
+O ator poderá ser identificado como usuário local, sistema, migration ou processo de restauração.
+
+Eventos pertencentes à mesma operação compartilharão o mesmo `correlationId`.
+
+Logs técnicos da aplicação e logs de auditoria possuirão finalidades e políticas de retenção diferentes.
+
+# DECISÃO 045
+
+## Título
+
+Histórico append-only de odômetro e continuidade após troca de painel.
+
+## Data
+
+13/07/2026
+
+## Motivo
+
+Armazenar apenas o KM atual do veículo apagaria o histórico necessário para jornadas, consumo e manutenção.
+
+Troca ou reinicialização do painel também pode produzir regressão legítima na leitura exibida.
+
+## Impacto
+
+Leituras de odômetro serão append-only.
+
+O KM atual será derivado da última leitura válida.
+
+O fluxo normal bloqueará leituras regressivas.
+
+Ajustes de odômetro exigirão motivo e auditoria.
+
+Registros históricos não serão reescritos.
+
+Troca, substituição ou reinicialização do painel será tratada por evento específico.
+
+O evento de troca registrará, no mínimo:
+
+- veículo;
+- leitura final anterior;
+- nova leitura exibida;
+- data operacional;
+- motivo;
+- ator.
+
+O sistema manterá uma quilometragem efetiva monotônica para preservar continuidade histórica.
+
+Jornadas, abastecimentos e manutenções deverão registrar a leitura exibida e a referência necessária para obter a quilometragem efetiva.
+
+Cancelamento ou correção de leitura deverá recalcular os dados derivados afetados sem remover o histórico.
+
+# DECISÃO 046
+
+## Título
+
+Método oficial de consumo e precisão dos dados de abastecimento.
+
+## Data
+
+13/07/2026
+
+## Motivo
+
+O consumo não pode ser calculado corretamente a partir de abastecimentos arbitrários sem conhecer o nível comparável do tanque.
+
+Litros e preço por litro também exigem precisão superior à de valores monetários comuns.
+
+## Impacto
+
+O consumo calculado oficial do MVP utilizará o método tanque cheio a tanque cheio.
+
+O cálculo utilizará:
+
+- quilômetros efetivos percorridos desde o tanque cheio anterior;
+- soma dos litros abastecidos desde esse tanque cheio, incluindo abastecimentos parciais e o abastecimento cheio final.
+
+Abastecimentos parciais serão acumulados até o próximo abastecimento marcado como tanque cheio.
+
+Sem dois marcos válidos de tanque cheio, o consumo calculado será apresentado como indisponível.
+
+O consumo informado manualmente pelo computador de bordo será armazenado separadamente.
+
+Consumo calculado e consumo informado nunca serão combinados ou substituídos silenciosamente.
+
+A interface identificará claramente a origem do indicador.
+
+O total pago será armazenado em centavos inteiros e será o valor financeiro autoritativo.
+
+Conceitualmente, recomenda-se representar litros como quantidade inteira de mililitros, permitindo três casas decimais sem ponto flutuante.
+
+Conceitualmente, recomenda-se representar o preço por litro como taxa inteira em milésimos de Real por litro, ou representação decimal equivalente que preserve pelo menos três casas decimais.
+
+A representação física definitiva será documentada em `05_DATABASE.md`.
+
+Divergências entre litros, preço unitário e total pago seguirão tolerância definida em `01_REQUISITOS.md` e `06_CALCULOS.md`.
+
+O sistema não alterará automaticamente o total financeiro pago para forçar igualdade com o produto entre litros e preço unitário.
+
+Correção ou cancelamento de abastecimento recalculará os ciclos de consumo afetados.
+
+# DECISÃO 047
+
+## Título
+
+Taxonomia multidimensional e escopo das despesas.
+
+## Data
+
+13/07/2026
+
+## Motivo
+
+Uma única categoria não é suficiente para determinar se uma despesa é operacional, pessoal, patrimonial, fixa, variável ou vinculada a um veículo.
+
+Associar toda despesa obrigatoriamente a veículo também excluiria despesas gerais e pessoais.
+
+## Impacto
+
+Toda despesa será classificada por dimensões independentes.
+
+As dimensões obrigatórias serão:
+
+- natureza;
+- comportamento;
+- escopo;
+- categoria.
+
+A natureza poderá ser:
+
+- operacional;
+- pessoal;
+- patrimonial.
+
+O comportamento poderá ser:
+
+- fixo;
+- variável.
+
+O escopo poderá ser:
+
+- veículo;
+- jornada;
+- operação geral;
+- pessoal;
+- patrimonial.
+
+A categoria identificará o tipo, como combustível, alimentação, pedágio, estacionamento, lavagem, manutenção, seguro, IPVA, licenciamento, impostos, multas, financiamentos ou outras.
+
+A categoria não determinará sozinha a natureza, o comportamento ou o escopo.
+
+No MVP, exigirão veículo:
+
+- combustível;
+- abastecimento;
+- manutenção de veículo;
+- seguro de veículo;
+- IPVA;
+- licenciamento;
+- multa vinculada a veículo;
+- lavagem de veículo específico;
+- financiamento vinculado a veículo, quando esse registro existir.
+
+Permitirão veículo opcional:
+
+- alimentação;
+- pedágio;
+- estacionamento;
+- impostos gerais;
+- taxas bancárias;
+- despesas pessoais;
+- despesas administrativas;
+- outras despesas sem vínculo obrigatório definido.
+
+Pedágio e estacionamento operacionais deverão permitir vínculo com veículo e jornada, sem tornar a jornada obrigatória.
+
+As regras completas de impacto de multas no resultado e de separação entre principal, juros e encargos de financiamentos permanecerão pendentes no Grupo B.
+
+# DECISÃO 048
+
+## Título
+
+Baseline de segurança local do MVP.
+
+## Data
+
+13/07/2026
+
+## Motivo
+
+O MVP será um aplicativo desktop local e monousuário, mas armazenará dados financeiros e operacionais sensíveis.
+
+É necessário estabelecer proteções mínimas sem introduzir antecipadamente autenticação remota ou infraestrutura cloud.
+
+## Impacto
+
+O MVP será local e monousuário.
+
+Não haverá autenticação remota no MVP.
+
+O renderer do Electron não terá acesso direto ao Node.js, Prisma ou SQLite.
+
+O banco será armazenado no diretório seguro de dados da aplicação para o usuário do Windows.
+
+O acesso ao sistema de arquivos ocorrerá somente através de fronteiras autorizadas.
+
+Logs técnicos não armazenarão desnecessariamente:
+
+- saldos completos;
+- valores financeiros detalhados;
+- placas;
+- nomes de contas;
+- conteúdo integral de registros;
+- credenciais;
+- segredos.
+
+Backups serão tratados como dados sensíveis.
+
+Nenhuma senha, token ou segredo será armazenado em texto puro.
+
+A primeira versão do MVP não utilizará criptografia própria do arquivo SQLite.
+
+Essa escolha evita gerenciamento inseguro de chaves e complexidade prematura, mas mantém o risco de leitura dos dados por alguém que obtenha acesso ao perfil do Windows ou aos arquivos de backup.
+
+Como proteções compensatórias:
+
+- o banco ficará no diretório do usuário;
+- a aplicação não exporá acesso direto ao banco;
+- backups exigirão ação explícita;
+- a interface alertará que backups contêm dados sensíveis;
+- arquivos não serão enviados para serviços externos;
+- logs serão minimizados e sanitizados;
+- o funcionamento permanecerá offline.
+
+Proteção adicional por senha, criptografia do banco ou integração com mecanismos seguros do sistema operacional será analisada separadamente antes de distribuição ampla ou suporte multiusuário.
+
+# DECISÃO 049
+
+## Título
+
+Requisitos não funcionais mínimos do MVP.
+
+## Data
+
+13/07/2026
+
+## Motivo
+
+Critérios apenas qualitativos, como desempenho elevado ou boa acessibilidade, não permitem verificar se a fundação e o MVP estão concluídos.
+
+Os valores precisam ser realistas para um aplicativo pessoal local.
+
+## Impacto
+
+O alvo inicial de compatibilidade será:
+
+- Windows 10 versão 22H2 em arquitetura x64;
+- Windows 11 em arquitetura x64.
+
+ARM64 e versões anteriores do Windows ficarão fora do suporte inicial.
+
+A compatibilidade com Windows 10 será reavaliada antes da distribuição, independentemente do ciclo de suporte do fornecedor do sistema operacional.
+
+Em equipamento de referência com processador de quatro núcleos, 8 GB de RAM e SSD:
+
+- inicialização fria deverá ocorrer em até 5 segundos no percentil 95;
+- consultas comuns deverão responder em até 500 milissegundos no percentil 95;
+- relatórios anuais básicos deverão responder em até 2 segundos no percentil 95.
+
+Os testes mínimos de volume utilizarão, pelo menos:
+
+- 5 anos de dados;
+- 50.000 lançamentos financeiros;
+- 100.000 movimentos de conta;
+- 5.000 jornadas;
+- 10 veículos;
+- 10.000 registros especializados entre abastecimentos, manutenções e documentos;
+- 250.000 eventos de auditoria.
+
+Todas as funcionalidades do MVP operarão sem conexão com a internet.
+
+Falha de migration deverá:
+
+- preservar o banco anterior;
+- impedir continuação com schema parcialmente atualizado;
+- apresentar erro compreensível;
+- permitir nova tentativa ou restauração;
+- não causar perda silenciosa de dados.
+
+Backup válido deverá conter identificação de versão, verificação de integridade e dados suficientes para restauração integral.
+
+Restauração deverá utilizar arquivo temporário, backup preventivo e substituição atômica.
+
+Acessibilidade mínima incluirá:
+
+- operação das ações essenciais por teclado;
+- foco visível;
+- rótulos associados aos campos;
+- mensagens de erro compreensíveis;
+- contraste mínimo de 4,5:1 para texto comum;
+- ausência de dependência exclusiva de cor para comunicar estado.
+
+Logs técnicos locais terão retenção inicial máxima de 30 dias ou 20 MB, prevalecendo o limite atingido primeiro.
+
+Logs técnicos poderão conter:
+
+- timestamp;
+- severidade;
+- módulo;
+- código de erro;
+- `correlationId`;
+- mensagem sanitizada.
+
+Logs técnicos não substituirão a auditoria.
+
+A auditoria seguirá retenção histórica e não será removida pela rotação de logs técnicos.
+
+Os valores de desempenho, volume, compatibilidade e retenção são metas iniciais do MVP e poderão ser revisados por nova decisão, com justificativa e testes correspondentes.
