@@ -1,0 +1,1 @@
+O RUMO é um Sistema de Gestão Operacional e Patrimonial (ERP pessoal) para motoristas de aplicativo. Seu objetivo é permitir o controle completo da operação diária, mostrando faturamento, lucro, custos, metas, patrimônio e evolução financeira, gerenciar patrimônio tal qual um banco digital de investimento e gerenciar o uso e despesas do(s) veículo(s).
