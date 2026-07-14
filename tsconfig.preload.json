@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "lib": ["ES2022", "DOM"],
+    "types": ["node", "electron"],
+    "tsBuildInfoFile": ".vite/tsconfig.preload.tsbuildinfo"
+  },
+  "files": ["vite.preload.config.ts"]
+}
