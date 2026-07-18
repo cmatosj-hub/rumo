@@ -79,7 +79,11 @@ O workflow `Foundation CI` foi executado com sucesso no GitHub Actions. Os jobs 
 
 O instalador não é assinado e não está liberado para distribuição pública. A instalação deve ser validada manualmente em ambiente descartável devido à ausência de isolamento confiável do `LOCALAPPDATA` pelo bootstrapper Squirrel no teste automatizado atual.
 
-A fundação técnica está validada localmente e na CI, e a primeira feature vertical ainda não foi iniciada. Permanecem pendentes a instalação manual do `Setup.exe` em uma máquina Windows limpa, a primeira abertura do aplicativo instalado, a criação e persistência do banco nesse ambiente, o fechamento e a reabertura, a desinstalação, a assinatura digital, o ícone e branding definitivos e o eventual retorno do runner para `windows-latest`.
+A fundação técnica está validada localmente e na CI. A primeira vertical, fechamento diário, e sua camada de experiência operacional foram iniciadas: o renderer oferece fechamento, histórico filtrável, dashboard semanal e preferências opcionais de meta. Permanecem pendentes a instalação manual do `Setup.exe` em uma máquina Windows limpa, a primeira abertura do aplicativo instalado, a criação e persistência do banco nesse ambiente, o fechamento e a reabertura, a desinstalação, a assinatura digital, o ícone e branding definitivos e o eventual retorno do runner para `windows-latest`.
+
+As preferências operacionais são acessadas pelos canais explícitos `operational-settings:get` e `operational-settings:update`. O preload valida requisições e respostas, o processo principal executa os casos de uso e somente a infraestrutura acessa Prisma. Metas monetárias são opcionais, positivas e persistidas em centavos; `weekStartsOn` utiliza a numeração ISO de 1 (segunda-feira) a 7 (domingo).
+
+O dashboard é uma projeção dos fechamentos diários e não um demonstrativo financeiro canônico. Cálculos de agregação, progresso, diferença para a meta, médias, valor líquido por hora, comparação semanal e filtros de período ficam no domínio `modules/dashboard`; componentes React apenas apresentam os resultados.
 
 ---
 

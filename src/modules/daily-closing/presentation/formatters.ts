@@ -53,3 +53,11 @@ export function parseDecimalToScaledInteger(
 
   return Number.isSafeInteger(result) ? result : null;
 }
+
+export function normalizeMoneyInput(rawValue: string): string {
+  const cents = parseDecimalToScaledInteger(rawValue, 2, 100);
+  if (cents === null) {
+    return rawValue;
+  }
+  return (cents / 100).toFixed(2).replace('.', ',');
+}

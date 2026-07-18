@@ -7,6 +7,7 @@ import {
   currentLocalDate,
   formatCurrency,
   formatDistance,
+  normalizeMoneyInput,
   parseDecimalToScaledInteger,
 } from './formatters';
 
@@ -232,7 +233,7 @@ export function DailyClosingForm({
       >
         <div className="form-card">
           <fieldset>
-            <legend>Identificação</legend>
+            <legend>Data</legend>
             <label className="field">
               <span>Data do fechamento</span>
               <input
@@ -265,6 +266,12 @@ export function DailyClosingForm({
                     <span>R$</span>
                     <input
                       inputMode="decimal"
+                      onBlur={(event) =>
+                        updateValue(
+                          field,
+                          normalizeMoneyInput(event.target.value),
+                        )
+                      }
                       onChange={(event) =>
                         updateValue(field, event.target.value)
                       }
@@ -287,6 +294,12 @@ export function DailyClosingForm({
                     <span>R$</span>
                     <input
                       inputMode="decimal"
+                      onBlur={(event) =>
+                        updateValue(
+                          field,
+                          normalizeMoneyInput(event.target.value),
+                        )
+                      }
                       onChange={(event) =>
                         updateValue(field, event.target.value)
                       }

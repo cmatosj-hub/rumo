@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest';
 const MIGRATIONS_DIRECTORY = path.resolve('prisma/migrations');
 const FOUNDATION_MIGRATION = '20260717220000_foundation';
 const DAILY_CLOSING_MIGRATION = '20260718010000_daily_closings';
+const OPERATIONAL_PREFERENCES_MIGRATION =
+  '20260718050000_operational_preferences';
 
 describe('migration fundacional', () => {
   it('mantém as migrations versionadas em ordem determinística', async () => {
@@ -19,6 +21,7 @@ describe('migration fundacional', () => {
     expect(migrationDirectories).toEqual([
       FOUNDATION_MIGRATION,
       DAILY_CLOSING_MIGRATION,
+      OPERATIONAL_PREFERENCES_MIGRATION,
     ]);
     await expect(
       readFile(
@@ -26,6 +29,21 @@ describe('migration fundacional', () => {
         'utf8',
       ),
     ).resolves.not.toHaveLength(0);
+  });
+
+  it('adiciona preferências operacionais sem criar um agregado genérico de metas', async () => {
+    const sql = await readFile(
+      path.join(
+        MIGRATIONS_DIRECTORY,
+        OPERATIONAL_PREFERENCES_MIGRATION,
+        'migration.sql',
+      ),
+      'utf8',
+    );
+    expect(sql).toContain('weekly_goal_cents');
+    expect(sql).toContain('minimum_hourly_rate_cents');
+    expect(sql).toContain('week_starts_on');
+    expect(sql).not.toContain('CREATE TABLE');
   });
 
   it('adiciona o fechamento diário sem alterar a migration fundacional', async () => {

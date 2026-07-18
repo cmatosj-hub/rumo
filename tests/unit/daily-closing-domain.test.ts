@@ -4,7 +4,10 @@ import {
   DailyClosingValidationError,
   calculateDailyClosingSummary,
 } from '../../src/modules/daily-closing/domain/daily-closing';
-import { parseDecimalToScaledInteger } from '../../src/modules/daily-closing/presentation/formatters';
+import {
+  normalizeMoneyInput,
+  parseDecimalToScaledInteger,
+} from '../../src/modules/daily-closing/presentation/formatters';
 
 const validValues = {
   finalOdometerMeters: 125_500,
@@ -45,6 +48,7 @@ describe('cálculos do fechamento diário', () => {
     expect(parseDecimalToScaledInteger('123,45', 2, 100)).toBe(12_345);
     expect(parseDecimalToScaledInteger('1000.125', 3, 1000)).toBe(1_000_125);
     expect(parseDecimalToScaledInteger('7,25', 2, 3600)).toBe(26_100);
+    expect(normalizeMoneyInput('123,4')).toBe('123,40');
   });
 
   it('rejeita valores negativos, regressão de odômetro e decimais inválidos', () => {

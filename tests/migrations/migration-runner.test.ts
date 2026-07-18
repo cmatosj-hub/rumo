@@ -46,6 +46,7 @@ describe('runner de migrations', () => {
     expect(firstResult.appliedMigrationIds).toEqual([
       '20260717220000_foundation',
       '20260718010000_daily_closings',
+      '20260718050000_operational_preferences',
     ]);
     expect(firstResult.backupPath).toBeNull();
     expect(secondResult.appliedMigrationIds).toEqual([]);

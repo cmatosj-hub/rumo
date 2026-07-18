@@ -732,6 +732,10 @@ Registrar período de trabalho, veículo, horas e quilometragem operacional.
 
 ## 5. Receitas e despesas
 
+### Estado parcial da primeira vertical
+
+O fechamento diário operacional, seu histórico, o dashboard semanal e as preferências opcionais de metas estão implementados como primeira vertical parcial. Essa entrega ainda não conclui receitas e despesas: contas, movimentos, fatos financeiros canônicos, edição, cancelamento e prevenção de sobreposição com receitas individuais permanecem pendentes e não são substituídos pela projeção operacional do dashboard.
+
 ### Objetivo
 
 Registrar fatos financeiros operacionais sem duplicidade.

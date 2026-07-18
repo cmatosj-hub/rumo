@@ -105,6 +105,8 @@ src/
 
 Não existirão diretórios globais de `services` ou `repositories` contendo regras de diferentes módulos.
 
+Na primeira vertical, `daily-closing` mantém o registro operacional, `operational-settings` mantém preferências opcionais do usuário local e `dashboard` contém projeções puras de indicadores. A projeção do dashboard consome contratos públicos e não acessa a infraestrutura dos demais módulos.
+
 ---
 
 # 5. Regras de dependência

@@ -9,6 +9,11 @@ import {
   foundationDiagnosticResponseSchema,
   listDailyClosingsRequestSchema,
   listDailyClosingsResponseSchema,
+  OPERATIONAL_SETTINGS_IPC_CHANNELS,
+  getOperationalSettingsRequestSchema,
+  getOperationalSettingsResponseSchema,
+  updateOperationalSettingsRequestSchema,
+  updateOperationalSettingsResponseSchema,
   type RumoApi,
 } from '../shared/contracts';
 
@@ -42,6 +47,26 @@ const rumoApi: RumoApi = {
       );
 
       return foundationDiagnosticResponseSchema.parse(response);
+    },
+  },
+  operationalSettings: {
+    get: async (request) => {
+      const validatedRequest =
+        getOperationalSettingsRequestSchema.parse(request);
+      const response: unknown = await ipcRenderer.invoke(
+        OPERATIONAL_SETTINGS_IPC_CHANNELS.get,
+        validatedRequest,
+      );
+      return getOperationalSettingsResponseSchema.parse(response);
+    },
+    update: async (request) => {
+      const validatedRequest =
+        updateOperationalSettingsRequestSchema.parse(request);
+      const response: unknown = await ipcRenderer.invoke(
+        OPERATIONAL_SETTINGS_IPC_CHANNELS.update,
+        validatedRequest,
+      );
+      return updateOperationalSettingsResponseSchema.parse(response);
     },
   },
 };

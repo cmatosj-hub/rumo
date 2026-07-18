@@ -3,10 +3,12 @@ import { app, ipcMain, session, type BrowserWindow } from 'electron';
 import { createDailyClosing } from '../../modules/daily-closing/application/create-daily-closing';
 import { listDailyClosings } from '../../modules/daily-closing/application/list-daily-closings';
 import { PrismaDailyClosingRepository } from '../../modules/daily-closing/infrastructure/prisma-daily-closing-repository';
+import { PrismaOperationalSettingsRepository } from '../../modules/operational-settings/infrastructure/prisma-operational-settings-repository';
 import { SystemClock } from '../../shared/infrastructure/system-clock';
 import { UuidV7Generator } from '../../shared/infrastructure/uuid-v7-generator';
 import { registerDailyClosingIpc } from '../ipc/register-daily-closing-ipc';
 import { registerFoundationIpc } from '../ipc/register-foundation-ipc';
+import { registerOperationalSettingsIpc } from '../ipc/register-operational-settings-ipc';
 import { configureSecureSession } from '../security/configure-session';
 import { createMainWindow } from '../windows/create-main-window';
 import {
@@ -59,6 +61,8 @@ export async function createApplication(): Promise<void> {
     const dailyClosingRepository = new PrismaDailyClosingRepository(
       databaseClient,
     );
+    const operationalSettingsRepository =
+      new PrismaOperationalSettingsRepository(databaseClient);
 
     stage = 'creating-main-window';
     let mainWindow: BrowserWindow | null = await createMainWindow();
@@ -83,6 +87,15 @@ export async function createApplication(): Promise<void> {
       identifierGenerator,
       listClosings: async () => listDailyClosings(dailyClosingRepository),
     });
+    const unregisterOperationalSettingsIpc = registerOperationalSettingsIpc(
+      ipcMain,
+      {
+        clock,
+        getTrustedWebContents: () => mainWindow?.webContents ?? null,
+        identifierGenerator,
+        repository: operationalSettingsRepository,
+      },
+    );
 
     mainWindow.on('closed', () => {
       mainWindow = null;
@@ -105,6 +118,7 @@ export async function createApplication(): Promise<void> {
     app.on('before-quit', (event) => {
       unregisterFoundationIpc();
       unregisterDailyClosingIpc();
+      unregisterOperationalSettingsIpc();
 
       if (disconnectDatabaseClient === null || shutdownStarted) {
         return;

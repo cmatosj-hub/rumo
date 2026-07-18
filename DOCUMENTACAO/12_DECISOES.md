@@ -1680,3 +1680,40 @@ Logs técnicos não substituirão a auditoria.
 A auditoria seguirá retenção histórica e não será removida pela rotação de logs técnicos.
 
 Os valores de desempenho, volume, compatibilidade e retenção são metas iniciais do MVP e poderão ser revisados por nova decisão, com justificativa e testes correspondentes.
+
+---
+
+# DECISÃO 050
+
+## Título
+
+Preferências de metas e dashboard operacional da primeira vertical.
+
+## Data
+
+18/07/2026
+
+## Motivo
+
+O fechamento diário precisa oferecer acompanhamento semanal útil antes da implantação do modelo financeiro canônico completo, sem antecipar o agregado genérico de metas nem tornar metas obrigatórias.
+
+## Impacto
+
+`UserSettings` armazenará, como preferências opcionais do usuário local, meta semanal, meta mensal e mínimo líquido desejado por hora, todos em centavos inteiros positivos quando informados, além do dia inicial da semana entre 1 (segunda-feira) e 7 (domingo).
+
+O dashboard será uma projeção operacional explicável dos registros de `DailyClosing`. Ele não substituirá contas, lançamentos financeiros, receitas individuais ou relatórios canônicos futuros.
+
+Para o período semanal configurado:
+
+- resultado líquido é a soma dos resultados líquidos dos fechamentos;
+- dias trabalhados e quantidade de fechamentos correspondem à quantidade de fechamentos no período;
+- média diária é o resultado líquido dividido pelos dias trabalhados e fica indisponível quando não houver fechamento;
+- líquido por hora é o resultado líquido multiplicado por 3.600 e dividido pelos segundos trabalhados, ficando indisponível com duração zero;
+- progresso da meta é `resultado líquido / meta × 100`;
+- valor restante é `máximo(0, meta - resultado líquido)`;
+- excedente é `máximo(0, resultado líquido - meta)`;
+- comparação usa a semana civil imediatamente anterior e calcula a variação sobre o módulo do resultado anterior; se a base anterior for zero, retorna zero somente quando o resultado atual também for zero e, nos demais casos, fica indisponível.
+
+Todos os cálculos permanecerão no domínio. A interface apenas apresentará valores calculados, indicará indisponibilidade e identificará a origem operacional dos indicadores.
+
+Esta decisão não cria histórico ou estados de meta, rateio, orçamento, edição ou exclusão de fechamento, calendário, gráfico nem qualquer área financeira futura.

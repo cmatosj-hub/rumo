@@ -8,6 +8,12 @@ import type {
   ListDailyClosingsRequest,
   ListDailyClosingsResponse,
 } from './daily-closing-ipc';
+import type {
+  GetOperationalSettingsRequest,
+  GetOperationalSettingsResponse,
+  UpdateOperationalSettingsRequest,
+  UpdateOperationalSettingsResponse,
+} from './operational-settings-ipc';
 
 export interface RumoApi {
   readonly dailyClosings: {
@@ -20,6 +26,14 @@ export interface RumoApi {
     check(
       request: FoundationDiagnosticRequest,
     ): Promise<FoundationDiagnosticResponse>;
+  };
+  readonly operationalSettings: {
+    get(
+      request: GetOperationalSettingsRequest,
+    ): Promise<GetOperationalSettingsResponse>;
+    update(
+      request: UpdateOperationalSettingsRequest,
+    ): Promise<UpdateOperationalSettingsResponse>;
   };
 }
 

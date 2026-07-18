@@ -49,14 +49,18 @@ model DailyClosing {
 }
 
 model UserSettings {
-  id        String    @id
-  userId    String    @unique @map("user_id")
-  currency  String    @default("BRL")
-  timezone  String    @default("America/Sao_Paulo")
-  theme     String    @default("system")
-  createdAt DateTime  @map("created_at")
-  updatedAt DateTime  @map("updated_at")
-  user      LocalUser @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  id                     String    @id
+  userId                 String    @unique @map("user_id")
+  currency               String    @default("BRL")
+  timezone               String    @default("America/Sao_Paulo")
+  theme                  String    @default("system")
+  weeklyGoalCents        Int?      @map("weekly_goal_cents")
+  monthlyGoalCents       Int?      @map("monthly_goal_cents")
+  minimumHourlyRateCents Int?      @map("minimum_hourly_rate_cents")
+  weekStartsOn           Int       @default(1) @map("week_starts_on")
+  createdAt              DateTime  @map("created_at")
+  updatedAt              DateTime  @map("updated_at")
+  user                   LocalUser @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@map("user_settings")
 }

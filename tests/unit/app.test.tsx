@@ -53,6 +53,19 @@ function installRumoApi(options?: {
     diagnostics: {
       check: vi.fn(),
     },
+    operationalSettings: {
+      get: vi.fn().mockResolvedValue({
+        data: {
+          minimumHourlyRateCents: null,
+          monthlyGoalCents: null,
+          updatedAtUtc: null,
+          weeklyGoalCents: null,
+          weekStartsOn: 1,
+        },
+        ok: true,
+      }),
+      update: vi.fn(),
+    },
   };
 
   Object.defineProperty(window, 'rumo', {
@@ -81,10 +94,41 @@ describe('primeira vertical do aplicativo', () => {
       screen.getByRole('navigation', { name: 'Navegação principal' }),
     ).toBeVisible();
     expect(
-      await screen.findByText('Registre seu primeiro fechamento'),
+      await screen.findByText(
+        'Seu painel ganha vida com o primeiro fechamento',
+      ),
     ).toBeVisible();
     expect(navigationButton('Fechar dia')).toBeVisible();
     expect(navigationButton('Fechamentos')).toBeVisible();
+  });
+
+  it('salva preferências e as reflete no dashboard', async () => {
+    const api = installRumoApi();
+    vi.mocked(api.operationalSettings.update).mockResolvedValue({
+      data: {
+        minimumHourlyRateCents: 3_000,
+        monthlyGoalCents: null,
+        updatedAtUtc: '2026-07-18T12:00:00.000Z',
+        weeklyGoalCents: 150_000,
+        weekStartsOn: 1,
+      },
+      ok: true,
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(
+      within(
+        screen.getByRole('navigation', { name: 'Navegação principal' }),
+      ).getByRole('button', { name: 'Configurações' }),
+    );
+    await user.type(screen.getByLabelText('Meta semanal'), '1500,00');
+    await user.click(
+      screen.getByRole('button', { name: 'Salvar configurações' }),
+    );
+    expect(
+      await screen.findByText('Configurações salvas com sucesso.'),
+    ).toBeVisible();
+    expect(api.operationalSettings.update).toHaveBeenCalledTimes(1);
   });
 
   it('renderiza o formulário e calcula o resumo enquanto o usuário digita', async () => {
@@ -131,6 +175,7 @@ describe('primeira vertical do aplicativo', () => {
       await screen.findByText('Fechamento salvo com sucesso.'),
     ).toBeVisible();
     expect(api.dailyClosings.create).toHaveBeenCalledTimes(1);
+    expect(api.dailyClosings.list).toHaveBeenCalledTimes(2);
   });
 
   it('mantém os dados e apresenta o erro devolvido pelo processo principal', async () => {
