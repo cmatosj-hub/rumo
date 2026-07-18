@@ -49,6 +49,7 @@ Não avançar para a tarefa seguinte sem aprovação quando o trabalho estiver d
 
 ```text
 npm run start
+npm run native:node
 npm run build
 npm run typecheck
 npm run format
@@ -68,6 +69,8 @@ npm run verify
 
 Testes E2E e empacotamento permanecem comandos explícitos porque iniciam processos e geram artefatos próprios.
 
+`better-sqlite3` usa ABI 127 nos testes executados diretamente pelo Node 22 e ABI 148 no Electron 43. `native:node` restaura o primeiro; os scripts de migration e integração que precisam dele executam esse passo automaticamente. Electron Forge usa `@electron/rebuild` 4.2.0 e força o rebuild para ABI 148 antes de `start`, `package` e `make`. Assim, os comandos são seguros independentemente da ordem em que foram executados.
+
 `test:packaged` exige um package Windows x64 já gerado. `make -- --arch=x64` gera o instalador Squirrel interno em `out/make/squirrel.windows/x64`.
 
 Na CI sempre utilizar `npm ci`. O workflow executa qualidade em Ubuntu e empacotamento em Windows somente depois da aprovação do primeiro job.
@@ -82,11 +85,11 @@ A fundação técnica está validada localmente e na CI, e a primeira feature ve
 
 # 10. Banco na inicialização
 
-O bootstrap normal cria ou abre `app.getPath("userData")/data/rumo.db`, aplica migrations e conecta o Prisma antes de abrir a janela. Falhas impedem a inicialização.
+O bootstrap normal cria ou abre `app.getPath("userData")/data/rumo.db`, aplica migrations e conecta o Prisma antes de abrir a janela. O processo principal registra `APPLICATION_INITIALIZATION_SUCCEEDED` somente depois de concluir o bootstrap. Em falhas, registra etapa, nome, mensagem, cadeia de causas e stack no terminal ou log técnico, sem enviar esses detalhes ao renderer; o aplicativo empacotado mostra apenas uma mensagem controlada ao usuário.
 
 Nunca execute `prisma db push`. O aplicativo instalado usa o runner versionado e as migrations de `resources/migrations`; Prisma CLI não é dependência de runtime.
 
-`RUMO_E2E_USER_DATA_PATH` é reservado a testes empacotados e deve sempre apontar para diretório temporário removido ao final.
+`RUMO_E2E_USER_DATA_PATH` e `RUMO_STARTUP_SIGNAL_PATH` são reservados a testes e devem sempre apontar para caminhos temporários removidos ao final. O teste E2E aguarda o sinal explícito de sucesso; apenas encontrar um processo ou uma janela não é suficiente.
 
 ## 10.1 Fechamento diário operacional
 

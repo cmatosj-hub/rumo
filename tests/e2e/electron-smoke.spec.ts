@@ -3,7 +3,12 @@ import { access, mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-function electronEnvironment(userDataPath: string): Record<string, string> {
+import { waitForStartupSuccess } from './startup-signal';
+
+function electronEnvironment(
+  userDataPath: string,
+  startupSignalPath: string,
+): Record<string, string> {
   const environment: Record<string, string> = {};
 
   for (const [name, value] of Object.entries(process.env)) {
@@ -13,6 +18,7 @@ function electronEnvironment(userDataPath: string): Record<string, string> {
   }
 
   environment.RUMO_E2E_USER_DATA_PATH = userDataPath;
+  environment.RUMO_STARTUP_SIGNAL_PATH = startupSignalPath;
   return environment;
 }
 
@@ -21,6 +27,11 @@ test('registra um fechamento e o mantém após reabrir o aplicativo', async () =
     path.join(os.tmpdir(), 'rumo-packaged-database-'),
   );
   const databasePath = path.join(temporaryUserData, 'data', 'rumo.db');
+  const firstStartupSignal = path.join(temporaryUserData, 'first-startup.txt');
+  const reopenedStartupSignal = path.join(
+    temporaryUserData,
+    'reopened-startup.txt',
+  );
   const packagedMigrationPath = path.resolve(
     'out/rumo-win32-x64/resources/migrations/20260718010000_daily_closings/migration.sql',
   );
@@ -28,11 +39,12 @@ test('registra um fechamento e o mantém após reabrir o aplicativo', async () =
   await expect(access(packagedMigrationPath)).resolves.toBeUndefined();
 
   const firstApplication = await electron.launch({
-    env: electronEnvironment(temporaryUserData),
+    env: electronEnvironment(temporaryUserData, firstStartupSignal),
     executablePath: path.resolve('out/rumo-win32-x64/RUMO.exe'),
   });
 
   try {
+    await waitForStartupSuccess(firstStartupSignal);
     const page = await firstApplication.firstWindow();
     await expect(page).toHaveTitle('RUMO');
     await expect(page.getByText('RUMO', { exact: true })).toBeVisible();
@@ -81,11 +93,12 @@ test('registra um fechamento e o mantém após reabrir o aplicativo', async () =
   }
 
   const reopenedApplication = await electron.launch({
-    env: electronEnvironment(temporaryUserData),
+    env: electronEnvironment(temporaryUserData, reopenedStartupSignal),
     executablePath: path.resolve('out/rumo-win32-x64/RUMO.exe'),
   });
 
   try {
+    await waitForStartupSuccess(reopenedStartupSignal);
     const reopenedPage = await reopenedApplication.firstWindow();
     await reopenedPage
       .getByRole('navigation', { name: 'Navegação principal' })

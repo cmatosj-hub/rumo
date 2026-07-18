@@ -9,102 +9,120 @@ import { registerDailyClosingIpc } from '../ipc/register-daily-closing-ipc';
 import { registerFoundationIpc } from '../ipc/register-foundation-ipc';
 import { configureSecureSession } from '../security/configure-session';
 import { createMainWindow } from '../windows/create-main-window';
+import {
+  ApplicationInitializationError,
+  type ApplicationInitializationStage,
+} from './application-initialization-error';
 
 export async function createApplication(): Promise<void> {
-  await app.whenReady();
+  let stage: ApplicationInitializationStage = 'waiting-for-electron-ready';
 
-  configureSecureSession(session.defaultSession);
+  try {
+    await app.whenReady();
 
-  const [
-    { createDatabaseClient },
-    { resolveDatabasePath },
-    { resolveMigrationsDirectory },
-    { runMigrations },
-  ] = await Promise.all([
-    import('../../shared/infrastructure/database/create-database-client'),
-    import('../../shared/infrastructure/database/database-path'),
-    import('../../shared/infrastructure/database/migrations/migration-path'),
-    import('../../shared/infrastructure/database/migrations/migration-runner'),
-  ]);
-  const userDataPath =
-    process.env.RUMO_E2E_USER_DATA_PATH ?? app.getPath('userData');
-  const databasePath = resolveDatabasePath(userDataPath);
+    stage = 'configuring-secure-session';
+    configureSecureSession(session.defaultSession);
 
-  await runMigrations({
-    databasePath,
-    migrationsDirectory: resolveMigrationsDirectory({
+    stage = 'loading-database-infrastructure';
+    const [
+      { createDatabaseClient },
+      { resolveDatabasePath },
+      { resolveMigrationsDirectory },
+      { runMigrations },
+    ] = await Promise.all([
+      import('../../shared/infrastructure/database/create-database-client'),
+      import('../../shared/infrastructure/database/database-path'),
+      import('../../shared/infrastructure/database/migrations/migration-path'),
+      import('../../shared/infrastructure/database/migrations/migration-runner'),
+    ]);
+
+    stage = 'resolving-database-paths';
+    const userDataPath =
+      process.env.RUMO_E2E_USER_DATA_PATH ?? app.getPath('userData');
+    const databasePath = resolveDatabasePath(userDataPath);
+    const migrationsDirectory = resolveMigrationsDirectory({
       isPackaged: app.isPackaged,
       projectRoot: process.cwd(),
       resourcesPath: process.resourcesPath,
-    }),
-  });
+    });
 
-  const databaseClient = await createDatabaseClient(databasePath);
-  let disconnectDatabaseClient: (() => Promise<void>) | null = async () =>
-    databaseClient.$disconnect();
+    stage = 'applying-migrations';
+    await runMigrations({ databasePath, migrationsDirectory });
 
-  const clock = new SystemClock();
-  const identifierGenerator = new UuidV7Generator();
-  const dailyClosingRepository = new PrismaDailyClosingRepository(
-    databaseClient,
-  );
-  let mainWindow: BrowserWindow | null = await createMainWindow();
-  const unregisterFoundationIpc = registerFoundationIpc(ipcMain, {
-    applicationVersion: app.getVersion(),
-    clock,
-    electronVersion: process.versions.electron,
-    getTrustedWebContents: () => mainWindow?.webContents ?? null,
-    identifierGenerator,
-    nodeVersion: process.versions.node,
-  });
-  const unregisterDailyClosingIpc = registerDailyClosingIpc(ipcMain, {
-    createClosing: async (closing, correlationId) =>
-      createDailyClosing(
-        { clock, identifierGenerator, repository: dailyClosingRepository },
-        closing,
-        correlationId,
-      ),
-    getTrustedWebContents: () => mainWindow?.webContents ?? null,
-    identifierGenerator,
-    listClosings: async () => listDailyClosings(dailyClosingRepository),
-  });
+    stage = 'connecting-database';
+    const databaseClient = await createDatabaseClient(databasePath);
+    let disconnectDatabaseClient: (() => Promise<void>) | null = async () =>
+      databaseClient.$disconnect();
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
+    const clock = new SystemClock();
+    const identifierGenerator = new UuidV7Generator();
+    const dailyClosingRepository = new PrismaDailyClosingRepository(
+      databaseClient,
+    );
 
-  app.on('second-instance', () => {
-    if (mainWindow === null) {
-      return;
-    }
+    stage = 'creating-main-window';
+    let mainWindow: BrowserWindow | null = await createMainWindow();
 
-    if (mainWindow.isMinimized()) {
-      mainWindow.restore();
-    }
+    stage = 'registering-ipc';
+    const unregisterFoundationIpc = registerFoundationIpc(ipcMain, {
+      applicationVersion: app.getVersion(),
+      clock,
+      electronVersion: process.versions.electron,
+      getTrustedWebContents: () => mainWindow?.webContents ?? null,
+      identifierGenerator,
+      nodeVersion: process.versions.node,
+    });
+    const unregisterDailyClosingIpc = registerDailyClosingIpc(ipcMain, {
+      createClosing: async (closing, correlationId) =>
+        createDailyClosing(
+          { clock, identifierGenerator, repository: dailyClosingRepository },
+          closing,
+          correlationId,
+        ),
+      getTrustedWebContents: () => mainWindow?.webContents ?? null,
+      identifierGenerator,
+      listClosings: async () => listDailyClosings(dailyClosingRepository),
+    });
 
-    mainWindow.focus();
-  });
+    mainWindow.on('closed', () => {
+      mainWindow = null;
+    });
 
-  let shutdownStarted = false;
+    app.on('second-instance', () => {
+      if (mainWindow === null) {
+        return;
+      }
 
-  app.on('before-quit', (event) => {
-    unregisterFoundationIpc();
-    unregisterDailyClosingIpc();
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
 
-    if (disconnectDatabaseClient === null || shutdownStarted) {
-      return;
-    }
+      mainWindow.focus();
+    });
 
-    event.preventDefault();
-    shutdownStarted = true;
+    let shutdownStarted = false;
 
-    void disconnectDatabaseClient().finally(() => {
-      disconnectDatabaseClient = null;
+    app.on('before-quit', (event) => {
+      unregisterFoundationIpc();
+      unregisterDailyClosingIpc();
+
+      if (disconnectDatabaseClient === null || shutdownStarted) {
+        return;
+      }
+
+      event.preventDefault();
+      shutdownStarted = true;
+
+      void disconnectDatabaseClient().finally(() => {
+        disconnectDatabaseClient = null;
+        app.quit();
+      });
+    });
+
+    app.on('window-all-closed', () => {
       app.quit();
     });
-  });
-
-  app.on('window-all-closed', () => {
-    app.quit();
-  });
+  } catch (error: unknown) {
+    throw new ApplicationInitializationError(stage, error);
+  }
 }

@@ -19,8 +19,8 @@ export type DatabaseErrorCode =
 export class DatabaseInfrastructureError extends Error {
   readonly code: DatabaseErrorCode;
 
-  constructor(code: DatabaseErrorCode) {
-    super('Não foi possível inicializar o armazenamento local.');
+  constructor(code: DatabaseErrorCode, cause?: unknown) {
+    super('Não foi possível inicializar o armazenamento local.', { cause });
     this.code = code;
     this.name = 'DatabaseInfrastructureError';
   }
@@ -31,8 +31,11 @@ export async function createDatabaseClient(
 ): Promise<PrismaClient> {
   try {
     await mkdir(path.dirname(databasePath), { recursive: true });
-  } catch {
-    throw new DatabaseInfrastructureError(DATABASE_ERROR_CODES.filesystem);
+  } catch (error: unknown) {
+    throw new DatabaseInfrastructureError(
+      DATABASE_ERROR_CODES.filesystem,
+      error,
+    );
   }
 
   let client: PrismaClient;
@@ -40,8 +43,11 @@ export async function createDatabaseClient(
   try {
     const adapter = new PrismaBetterSqlite3({ url: toSqliteUrl(databasePath) });
     client = new PrismaClient({ adapter });
-  } catch {
-    throw new DatabaseInfrastructureError(DATABASE_ERROR_CODES.connection);
+  } catch (error: unknown) {
+    throw new DatabaseInfrastructureError(
+      DATABASE_ERROR_CODES.connection,
+      error,
+    );
   }
 
   try {
@@ -57,6 +63,6 @@ export async function createDatabaseClient(
 
     throw error instanceof DatabaseInfrastructureError
       ? error
-      : new DatabaseInfrastructureError(DATABASE_ERROR_CODES.pragmas);
+      : new DatabaseInfrastructureError(DATABASE_ERROR_CODES.pragmas, error);
   }
 }

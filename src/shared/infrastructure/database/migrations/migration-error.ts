@@ -13,8 +13,10 @@ export type MigrationErrorCode =
 export class MigrationInfrastructureError extends Error {
   readonly code: MigrationErrorCode;
 
-  constructor(code: MigrationErrorCode) {
-    super('Não foi possível atualizar a estrutura do armazenamento local.');
+  constructor(code: MigrationErrorCode, cause?: unknown) {
+    super('Não foi possível atualizar a estrutura do armazenamento local.', {
+      cause,
+    });
     this.code = code;
     this.name = 'MigrationInfrastructureError';
   }

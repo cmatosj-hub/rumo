@@ -129,6 +129,10 @@ describe('falha e recuperação de migration', () => {
     expect(caughtError).toBeInstanceOf(MigrationInfrastructureError);
     expect(caughtError).toMatchObject({ code: MIGRATION_ERROR_CODES.apply });
     expect((caughtError as Error).message).not.toContain('missing_table');
+    expect((caughtError as Error).cause).toBeInstanceOf(Error);
+    expect(((caughtError as Error).cause as Error).message).toContain(
+      'missing_table',
+    );
 
     const restored = new Database(scenario.databasePath, {
       fileMustExist: true,

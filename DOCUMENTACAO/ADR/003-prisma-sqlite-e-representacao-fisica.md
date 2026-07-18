@@ -41,7 +41,7 @@ O spike desta tarefa usa Prisma ORM 7.8.0, `@prisma/client` 7.8.0, `@prisma/adap
 - `PRAGMA foreign_keys = ON` é aplicado imediatamente após a abertura e validado.
 - O encerramento controlado chama `$disconnect()`.
 - O módulo nativo é desempacotado do ASAR por `@electron-forge/plugin-auto-unpack-natives` 7.11.2.
-- Os comandos de distribuição `package` e `make` forçam explicitamente o rebuild de `better-sqlite3` para o ABI do Electron e restringem o rebuild a esse módulo, evitando reutilizar por engano o binário instalado para o ABI do Node.js. O modo `start` mantém o comportamento normal do Forge para não exigir compilação local forçada.
+- Electron Forge força explicitamente o rebuild de `better-sqlite3` para o ABI do Electron em `start`, `package` e `make`, restrito a esse módulo. O projeto fixa `@electron/rebuild` 4.2.0, cuja cadeia `node-gyp` possui suporte ao Visual Studio 2026. Testes que carregam SQLite diretamente no Node restauram antes o binário para o ABI do Node; qualquer entrada Electron refaz o ABI 148, sem depender da ordem dos comandos.
 - O filtro de cópia do packager preserva `node_modules` para que o prune mantenha apenas dependências de produção e o auto-unpack encontre o binário nativo. O filtro padrão do plugin Vite, que copia somente `.vite`, não atende módulos externalizados.
 
 Não será usado `prisma db push`. Esta tarefa não cria migration. Migrations de runtime futuras serão executadas por código empacotado e não dependerão de `npx`, Prisma CLI global ou rede.

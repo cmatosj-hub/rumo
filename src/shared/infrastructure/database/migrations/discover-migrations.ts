@@ -42,7 +42,10 @@ export async function discoverMigrations(
         };
       }),
     );
-  } catch {
-    throw new MigrationInfrastructureError(MIGRATION_ERROR_CODES.discovery);
+  } catch (error: unknown) {
+    throw new MigrationInfrastructureError(
+      MIGRATION_ERROR_CODES.discovery,
+      error,
+    );
   }
 }

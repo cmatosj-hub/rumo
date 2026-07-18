@@ -228,13 +228,19 @@ export async function runMigrations(
       } else {
         await removeDatabaseArtifacts(options.databasePath);
       }
-    } catch {
-      throw new MigrationInfrastructureError(MIGRATION_ERROR_CODES.recovery);
+    } catch (recoveryError: unknown) {
+      throw new MigrationInfrastructureError(
+        MIGRATION_ERROR_CODES.recovery,
+        new AggregateError(
+          [error, recoveryError],
+          'Migration recovery failed.',
+        ),
+      );
     }
 
     throw error instanceof MigrationInfrastructureError
       ? error
-      : new MigrationInfrastructureError(MIGRATION_ERROR_CODES.apply);
+      : new MigrationInfrastructureError(MIGRATION_ERROR_CODES.apply, error);
   } finally {
     if (database.open) {
       database.close();
