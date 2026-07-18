@@ -38,7 +38,7 @@ Não serão configurados certificado, publicação, atualização automática, M
 
 O package, o make, o layout físico e o smoke test do executável são automatizados. O smoke test injeta um `userData` temporário, comprova inicialização, migration, Prisma, módulo nativo, IPC, isolamento do renderer e encerramento.
 
-O instalador, o pacote NuGet e o manifesto `RELEASES` foram gerados localmente. Uma tentativa de redirecionar a instalação silenciosa para `LOCALAPPDATA` temporário não foi respeitada pelo bootstrapper Squirrel neste ambiente. A instalação de teste foi desinstalada e os resíduos foram removidos, mas o ciclo completo instalado não será automatizado enquanto não houver isolamento confiável.
+O instalador, o pacote NuGet e o manifesto `RELEASES` foram gerados localmente e reproduzidos com sucesso pela pipeline Windows do GitHub Actions. Uma tentativa de redirecionar a instalação silenciosa para `LOCALAPPDATA` temporário não foi respeitada pelo bootstrapper Squirrel neste ambiente. A instalação de teste foi desinstalada e os resíduos foram removidos, mas o ciclo completo instalado não será automatizado enquanto não houver isolamento confiável.
 
 Assim, instalação, abertura e desinstalação deverão ser verificadas manualmente em máquina ou usuário descartável antes de distribuição. O instalador é interno, não assinado e pode gerar alerta do Windows SmartScreen.
 

@@ -72,7 +72,11 @@ Testes E2E e empacotamento permanecem comandos explícitos porque iniciam proces
 
 Na CI sempre utilizar `npm ci`. O workflow executa qualidade em Ubuntu e empacotamento em Windows somente depois da aprovação do primeiro job.
 
+O workflow `Foundation CI` foi executado com sucesso no GitHub Actions. Os jobs `quality` e `windows-package` validaram remotamente qualidade, testes, migrations, build de produção, rebuild nativo, pacote Windows x64, instalador Squirrel, smoke test, layout empacotado e upload dos artefatos. O job Windows permanece temporariamente em `windows-2022` até que uma versão estável do Electron Forge incorpore suporte oficial ao Visual Studio 2026 em sua cadeia de rebuild.
+
 O instalador não é assinado e não está liberado para distribuição pública. A instalação deve ser validada manualmente em ambiente descartável devido à ausência de isolamento confiável do `LOCALAPPDATA` pelo bootstrapper Squirrel no teste automatizado atual.
+
+A fundação técnica está validada localmente e na CI, e a primeira feature vertical ainda não foi iniciada. Permanecem pendentes a instalação manual do `Setup.exe` em uma máquina Windows limpa, a primeira abertura do aplicativo instalado, a criação e persistência do banco nesse ambiente, o fechamento e a reabertura, a desinstalação, a assinatura digital, o ícone e branding definitivos e o eventual retorno do runner para `windows-latest`.
 
 ---
 

@@ -383,20 +383,30 @@ Validado localmente:
 - lint, formatação, typecheck, testes, build, package, make e smoke test empacotado;
 - documentação e ADRs da fundação.
 
-Estruturalmente pronto, aguardando validação externa:
+Validado no GitHub Actions pelo workflow `Foundation CI`:
 
-- primeira execução dos jobs `quality` e `windows-package` no GitHub Actions;
-- ciclo manual de instalar, abrir e desinstalar em ambiente Windows descartável.
+- job `quality` concluído com instalação determinística, geração Prisma, formatação, lint, TypeScript, testes unitários, de contrato e integração, migrations e build;
+- job `windows-package` concluído com build de produção, testes de migrations, empacotamento Windows x64, rebuild nativo de `better-sqlite3`, instalador Squirrel, testes do pacote, validação do layout e upload dos artefatos;
+- build Windows reproduzido e artefatos internos gerados pela pipeline.
+
+Pendente de validação manual em uma máquina Windows limpa:
+
+- instalação do `Setup.exe`;
+- primeira abertura do aplicativo instalado;
+- criação e persistência do banco no ambiente instalado;
+- fechamento e reabertura do aplicativo;
+- desinstalação.
 
 Não concluído e fora da liberação interna atual:
 
 - assinatura digital;
-- identidade visual aprovada;
+- ícone e branding definitivos;
 - distribuição pública;
 - publicação de release;
-- atualização automática.
+- atualização automática;
+- eventual retorno do job `windows-package` de `windows-2022` para `windows-latest`, após suporte oficial ao Visual Studio 2026 na cadeia de rebuild do Electron Forge.
 
-Nenhum módulo funcional do MVP foi iniciado. A Fase 1 está tecnicamente pronta para revisão final, mas a CI não deve ser declarada verde e o instalador não deve ser declarado validado em máquina limpa até as duas verificações externas acima.
+Nenhum módulo funcional do MVP foi iniciado. A fundação técnica está validada localmente e na CI, com build e artefatos Windows reproduzidos no GitHub Actions. O instalador ainda não deve ser declarado validado em máquina limpa até a conclusão do ciclo manual acima.
 
 ---
 
