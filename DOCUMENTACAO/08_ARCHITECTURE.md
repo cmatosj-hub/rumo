@@ -2,179 +2,194 @@
 
 ## Objetivo
 
-O projeto deverá possuir arquitetura modular.
+O RUMO utiliza um monólito modular por funcionalidades, conforme a Decisão 033.
 
-Toda funcionalidade deverá possuir baixo acoplamento.
-
-Toda funcionalidade deverá possuir alta reutilização.
+A arquitetura deve preservar baixo acoplamento, regras testáveis e separação entre interface, aplicação, domínio e infraestrutura.
 
 ---
 
-# Princípios
+# 1. Plataforma
 
-- Código limpo
-- SOLID
-- DRY
-- KISS
-- Modularização
-- Separação de responsabilidades
+A plataforma aprovada para o MVP é:
+
+- Electron;
+- React;
+- TypeScript;
+- Vite;
+- Node.js;
+- Prisma;
+- SQLite.
+
+O aplicativo será desktop local-first e funcionará integralmente offline nas funcionalidades do MVP.
+
+Prisma e SQLite somente serão introduzidos nas tarefas específicas de persistência.
 
 ---
 
-# Estrutura
+# 2. Processos do Electron
 
+## 2.1 Processo principal
+
+Responsável por:
+
+- ciclo de vida da aplicação;
+- criação de janelas;
+- políticas de segurança;
+- handlers IPC;
+- composição de casos de uso e infraestrutura;
+- acesso futuro ao banco e ao sistema de arquivos por fronteiras autorizadas.
+
+## 2.2 Preload
+
+Responsável somente por expor uma API mínima e tipada através de `contextBridge`.
+
+O preload não expõe:
+
+- `ipcRenderer`;
+- métodos genéricos `send` ou `invoke`;
+- canais arbitrários;
+- Node.js;
+- sistema de arquivos;
+- Prisma ou SQLite.
+
+## 2.3 Renderer
+
+Responsável pela apresentação React.
+
+O renderer utiliza somente a API tipada exposta pelo preload e não acessa recursos privilegiados.
+
+---
+
+# 3. Segurança
+
+Toda janela deverá utilizar:
+
+- `nodeIntegration: false`;
+- `contextIsolation: true`;
+- `sandbox: true`;
+- `webSecurity: true`;
+- Content Security Policy;
+- bloqueio de navegação não autorizada;
+- bloqueio de novas janelas;
+- permissões negadas por padrão.
+
+Toda chamada IPC deverá possuir:
+
+- canal em allowlist;
+- método específico no preload;
+- payload e resposta validados;
+- validação do sender, frame principal e URL esperada;
+- retorno serializável e tipado.
+
+---
+
+# 4. Organização por módulo
+
+```text
 src/
+├── main/
+├── preload/
+├── renderer/
+├── modules/
+│   └── <module>/
+│       ├── domain/
+│       ├── application/
+│       ├── infrastructure/
+│       └── presentation/
+└── shared/
+    ├── domain/
+    ├── application/
+    ├── infrastructure/
+    └── contracts/
+```
 
-app/
-
-components/
-
-features/
-
-services/
-
-repositories/
-
-database/
-
-hooks/
-
-utils/
-
-types/
-
-assets/
-
-config/
-
-tests/
+Não existirão diretórios globais de `services` ou `repositories` contendo regras de diferentes módulos.
 
 ---
 
-# Components
+# 5. Regras de dependência
 
-Componentes reutilizáveis.
+```text
+presentation → application → domain
+infrastructure → application/domain
+domain → nenhuma camada externa
+main → application/infrastructure
+preload → contracts
+renderer → presentation/contracts
+```
 
-Nunca conter regras de negócio.
+## 5.1 Domínio
 
----
+- não depende de React, Electron, Prisma, Vite ou bibliotecas de interface;
+- contém regras, tipos e portas de domínio;
+- não acessa infraestrutura.
 
-# Features
+## 5.2 Aplicação
 
-Cada funcionalidade deverá ser isolada.
+- orquestra casos de uso;
+- controla fronteiras transacionais;
+- depende do domínio e de contratos abstratos;
+- não depende da apresentação.
 
-Exemplo
+## 5.3 Infraestrutura
 
-financeiro/
+- implementa persistência, IDs, relógio, logs e integrações locais;
+- não contém regras de negócio pertencentes ao domínio;
+- somente é composta pelo processo principal.
 
-operacional/
+## 5.4 Apresentação
 
-veiculos/
-
-manutencao/
-
-metas/
-
-patrimonio/
-
-relatorios/
-
-configuracoes/
-
----
-
-# Services
-
-Toda regra financeira.
-
-Toda regra operacional.
-
-Toda regra patrimonial.
-
-Toda inteligência do sistema.
+- adapta interação e resultados para o usuário;
+- não implementa regras financeiras ou operacionais;
+- não acessa banco ou repositories diretamente.
 
 ---
 
-# Repositories
+# 6. Compartilhamento
 
-Acesso ao banco.
+`shared` será limitado a responsabilidades realmente transversais.
 
-Nunca realizar cálculos.
+Uma abstração não será movida para `shared` apenas porque pode ser reutilizada no futuro.
 
----
-
-# Utils
-
-Funções auxiliares.
-
-Formatação.
-
-Datas.
-
-Moedas.
-
-Conversões.
+Contratos que atravessam o IPC deverão ser serializáveis, versionáveis e validados nas duas extremidades.
 
 ---
 
-# Hooks
+# 7. Persistência
 
-Hooks personalizados.
+O banco será SQLite através do Prisma.
 
-Nunca implementar regra financeira.
+Toda alteração estrutural utilizará migration versionada.
 
----
+A interface nunca acessará Prisma ou SQLite diretamente.
 
-# Banco
-
-SQLite.
-
-Utilizar Prisma.
-
-Toda alteração deverá utilizar Migration.
+A estratégia física e o schema serão definidos somente nas Tarefas 5 e 6 da Fase 1.
 
 ---
 
-# Componentização
+# 8. Qualidade
 
-Toda tela deverá ser composta por componentes pequenos.
+A fundação utiliza:
 
-Evitar componentes acima de aproximadamente 300 linhas.
+- TypeScript estrito;
+- ESLint;
+- Prettier;
+- Vitest;
+- Testing Library;
+- Playwright;
+- build e empacotamento verificáveis.
 
-Evitar funções acima de aproximadamente 100 linhas.
-
----
-
-# Performance
-
-Evitar renderizações desnecessárias.
-
-Utilizar Lazy Loading.
-
-Utilizar Memoização quando necessário.
-
-Priorizar desempenho.
+As fronteiras arquiteturais deverão ser protegidas por configuração estática e testes.
 
 ---
 
-# Escalabilidade
+# 9. Evolução
 
-Toda arquitetura deverá permitir:
+A arquitetura deverá permitir evolução para múltiplos usuários, cloud, mobile e integrações sem implementar antecipadamente essas funcionalidades.
 
-Múltiplos usuários.
+Funcionalidades futuras não poderão introduzir complexidade sem uso no MVP.
 
-Múltiplos veículos.
+As decisões detalhadas da fundação estão registradas em:
 
-Sincronização.
-
-Cloud.
-
-Aplicativo Mobile.
-
-Integrações futuras.
-
----
-
-# Objetivo
-
-A arquitetura deverá permitir que o projeto dobre de tamanho sem necessidade de reorganização estrutural.
+- `ADR/001-toolchain-e-runtime.md`;
+- `ADR/002-fronteiras-electron-e-ipc.md`.

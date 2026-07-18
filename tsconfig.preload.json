@@ -6,5 +6,6 @@
     "types": ["node", "electron"],
     "tsBuildInfoFile": ".vite/tsconfig.preload.tsbuildinfo"
   },
-  "files": ["vite.preload.config.ts"]
+  "files": ["vite.preload.config.ts"],
+  "include": ["src/preload/**/*.ts", "src/shared/contracts/**/*.ts"]
 }

@@ -5,7 +5,6 @@
   "description": "ERP pessoal local-first para motoristas de aplicativo.",
   "author": "RUMO",
   "license": "UNLICENSED",
-  "type": "module",
   "main": ".vite/build/main.js",
   "engines": {
     "node": ">=22.12.0 <23",
@@ -15,24 +14,47 @@
   "scripts": {
     "start": "electron-forge start",
     "build": "vite build --config vite.main.config.ts && vite build --config vite.preload.config.ts && vite build --config vite.renderer.config.ts",
-    "typecheck": "tsc --build tsconfig.main.json tsconfig.preload.json tsconfig.renderer.json --pretty false",
+    "typecheck": "tsc --build tsconfig.main.json tsconfig.preload.json tsconfig.renderer.json tsconfig.tests.json --pretty false",
+    "format": "prettier --write package.json *.config.ts tsconfig*.json src tests DOCUMENTACAO/ADR DOCUMENTACAO/08_ARCHITECTURE.md DOCUMENTACAO/09_DEVELOPER.md",
+    "format:check": "prettier --check package.json *.config.ts tsconfig*.json src tests DOCUMENTACAO/ADR DOCUMENTACAO/08_ARCHITECTURE.md DOCUMENTACAO/09_DEVELOPER.md",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run --exclude tests/contract/**",
+    "test:coverage": "vitest run --coverage --exclude tests/contract/**",
+    "test:contract": "vitest run tests/contract",
+    "test:e2e": "playwright test",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "electron-forge make",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run test:contract && npm run build"
   },
   "dependencies": {
     "react": "19.2.7",
-    "react-dom": "19.2.7"
+    "react-dom": "19.2.7",
+    "uuid": "14.0.1",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@electron-forge/cli": "7.11.2",
     "@electron-forge/plugin-vite": "7.11.2",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.61.1",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.1",
     "@types/node": "24.13.3",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.3",
+    "@vitest/coverage-v8": "4.1.10",
     "electron": "43.1.0",
+    "eslint": "10.7.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.3",
+    "jsdom": "29.1.1",
+    "prettier": "3.9.5",
     "typescript": "6.0.3",
-    "vite": "8.1.4"
+    "typescript-eslint": "8.64.0",
+    "vite": "8.1.4",
+    "vitest": "4.1.10"
   },
   "config": {
     "forge": "./forge.config.ts"
