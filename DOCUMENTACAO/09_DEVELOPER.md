@@ -58,6 +58,7 @@ npm run test
 npm run test:coverage
 npm run test:contract
 npm run test:e2e
+npm run test:packaged
 npm run package
 npm run make
 npm run verify
@@ -66,6 +67,22 @@ npm run verify
 `verify` executa formatação, lint, typecheck, testes unitários, testes de contrato e build.
 
 Testes E2E e empacotamento permanecem comandos explícitos porque iniciam processos e geram artefatos próprios.
+
+`test:packaged` exige um package Windows x64 já gerado. `make -- --arch=x64` gera o instalador Squirrel interno em `out/make/squirrel.windows/x64`.
+
+Na CI sempre utilizar `npm ci`. O workflow executa qualidade em Ubuntu e empacotamento em Windows somente depois da aprovação do primeiro job.
+
+O instalador não é assinado e não está liberado para distribuição pública. A instalação deve ser validada manualmente em ambiente descartável devido à ausência de isolamento confiável do `LOCALAPPDATA` pelo bootstrapper Squirrel no teste automatizado atual.
+
+---
+
+# 10. Banco na inicialização
+
+O bootstrap normal cria ou abre `app.getPath("userData")/data/rumo.db`, aplica migrations e conecta o Prisma antes de abrir a janela. Falhas impedem a inicialização.
+
+Nunca execute `prisma db push`. O aplicativo instalado usa o runner versionado e as migrations de `resources/migrations`; Prisma CLI não é dependência de runtime.
+
+`RUMO_E2E_USER_DATA_PATH` é reservado a testes empacotados e deve sempre apontar para diretório temporário removido ao final.
 
 ---
 

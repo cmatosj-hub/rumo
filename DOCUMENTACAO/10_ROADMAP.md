@@ -369,6 +369,35 @@ A Fase 1 estará concluída somente quando:
 - os critérios mínimos de segurança do Electron estiverem verificados;
 - a documentação da fundação estiver revisada.
 
+## Estado de validação em 17/07/2026
+
+Validado localmente:
+
+- shell Electron seguro, offline e com instância única;
+- IPC fundacional tipado e renderer sem Node.js, Prisma ou SQLite;
+- Prisma, SQLite, foreign keys, transações e encerramento controlado;
+- migration fundacional reproduzível, auditoria append-only, checksum, backup, rollback e recuperação;
+- ativação controlada de banco e migrations antes da abertura da janela;
+- package Windows x64 com Prisma Client, query compiler, módulo nativo desempacotado e migrations;
+- geração do instalador interno Squirrel.Windows;
+- lint, formatação, typecheck, testes, build, package, make e smoke test empacotado;
+- documentação e ADRs da fundação.
+
+Estruturalmente pronto, aguardando validação externa:
+
+- primeira execução dos jobs `quality` e `windows-package` no GitHub Actions;
+- ciclo manual de instalar, abrir e desinstalar em ambiente Windows descartável.
+
+Não concluído e fora da liberação interna atual:
+
+- assinatura digital;
+- identidade visual aprovada;
+- distribuição pública;
+- publicação de release;
+- atualização automática.
+
+Nenhum módulo funcional do MVP foi iniciado. A Fase 1 está tecnicamente pronta para revisão final, mas a CI não deve ser declarada verde e o instalador não deve ser declarado validado em máquina limpa até as duas verificações externas acima.
+
 ---
 
 # MVP 1.0 — NÚCLEO OPERACIONAL

@@ -19,14 +19,13 @@ test('abre o shell com isolamento e IPC restrito', async () => {
     }
   }
 
-  electronEnvironment.RUMO_DATABASE_SPIKE_USER_DATA = temporaryUserData;
-  electronEnvironment.RUMO_MIGRATION_SPIKE_USER_DATA = temporaryUserData;
+  electronEnvironment.RUMO_E2E_USER_DATA_PATH = temporaryUserData;
 
   await expect(access(packagedMigrationPath)).resolves.toBeUndefined();
 
   const application = await electron.launch({
     env: electronEnvironment,
-    executablePath: path.resolve('out/rumo-win32-x64/rumo.exe'),
+    executablePath: path.resolve('out/rumo-win32-x64/RUMO.exe'),
   });
   const applicationProcess = application.process();
   const processErrors: string[] = [];
@@ -86,6 +85,12 @@ test('abre o shell com isolamento e IPC restrito', async () => {
     if (applicationProcess.exitCode === null) {
       await application.close();
     }
-    await rm(temporaryUserData, { force: true, recursive: true });
+    await rm(temporaryUserData, {
+      force: true,
+      maxRetries: 5,
+      recursive: true,
+      retryDelay: 200,
+    });
+    await expect(access(temporaryUserData)).rejects.toThrow();
   }
 });

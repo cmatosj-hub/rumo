@@ -11,44 +11,33 @@ export async function createApplication(): Promise<void> {
 
   configureSecureSession(session.defaultSession);
 
-  const migrationSpikeUserDataPath = process.env.RUMO_MIGRATION_SPIKE_USER_DATA;
+  const [
+    { createDatabaseClient },
+    { resolveDatabasePath },
+    { resolveMigrationsDirectory },
+    { runMigrations },
+  ] = await Promise.all([
+    import('../../shared/infrastructure/database/create-database-client'),
+    import('../../shared/infrastructure/database/database-path'),
+    import('../../shared/infrastructure/database/migrations/migration-path'),
+    import('../../shared/infrastructure/database/migrations/migration-runner'),
+  ]);
+  const userDataPath =
+    process.env.RUMO_E2E_USER_DATA_PATH ?? app.getPath('userData');
+  const databasePath = resolveDatabasePath(userDataPath);
 
-  if (migrationSpikeUserDataPath !== undefined) {
-    const [
-      { resolveDatabasePath },
-      { resolveMigrationsDirectory },
-      { runMigrations },
-    ] = await Promise.all([
-      import('../../shared/infrastructure/database/database-path'),
-      import('../../shared/infrastructure/database/migrations/migration-path'),
-      import('../../shared/infrastructure/database/migrations/migration-runner'),
-    ]);
+  await runMigrations({
+    databasePath,
+    migrationsDirectory: resolveMigrationsDirectory({
+      isPackaged: app.isPackaged,
+      projectRoot: process.cwd(),
+      resourcesPath: process.resourcesPath,
+    }),
+  });
 
-    await runMigrations({
-      databasePath: resolveDatabasePath(migrationSpikeUserDataPath),
-      migrationsDirectory: resolveMigrationsDirectory({
-        isPackaged: app.isPackaged,
-        projectRoot: process.cwd(),
-        resourcesPath: process.resourcesPath,
-      }),
-    });
-  }
-
-  const spikeUserDataPath = process.env.RUMO_DATABASE_SPIKE_USER_DATA;
-  let disconnectDatabaseClient: (() => Promise<void>) | null = null;
-
-  if (spikeUserDataPath !== undefined) {
-    const [{ createDatabaseClient }, { resolveDatabasePath }] =
-      await Promise.all([
-        import('../../shared/infrastructure/database/create-database-client'),
-        import('../../shared/infrastructure/database/database-path'),
-      ]);
-    const databaseClient = await createDatabaseClient(
-      resolveDatabasePath(spikeUserDataPath),
-    );
-
-    disconnectDatabaseClient = async () => databaseClient.$disconnect();
-  }
+  const databaseClient = await createDatabaseClient(databasePath);
+  let disconnectDatabaseClient: (() => Promise<void>) | null = async () =>
+    databaseClient.$disconnect();
 
   let mainWindow: BrowserWindow | null = await createMainWindow();
   const unregisterFoundationIpc = registerFoundationIpc(ipcMain, {

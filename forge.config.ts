@@ -1,6 +1,7 @@
 export default {
   packagerConfig: {
     asar: true,
+    executableName: 'RUMO',
     extraResource: ['prisma/migrations'],
     ignore: (filePath: string): boolean => {
       if (filePath.length === 0) {
@@ -13,7 +14,20 @@ export default {
     },
   },
   rebuildConfig: {},
-  makers: [],
+  makers: [
+    {
+      name: '@electron-forge/maker-squirrel',
+      config: {
+        authors: 'RUMO',
+        description: 'Controle financeiro e operacional pessoal.',
+        exe: 'RUMO.exe',
+        name: 'rumo',
+        noMsi: true,
+        setupExe: 'RUMO-0.1.0 Setup.exe',
+        title: 'RUMO',
+      },
+    },
+  ],
   plugins: [
     {
       name: '@electron-forge/plugin-auto-unpack-natives',

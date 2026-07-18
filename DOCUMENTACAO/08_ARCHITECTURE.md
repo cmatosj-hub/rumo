@@ -192,4 +192,33 @@ Funcionalidades futuras não poderão introduzir complexidade sem uso no MVP.
 As decisões detalhadas da fundação estão registradas em:
 
 - `ADR/001-toolchain-e-runtime.md`;
-- `ADR/002-fronteiras-electron-e-ipc.md`.
+- `ADR/002-fronteiras-electron-e-ipc.md`;
+- `ADR/003-prisma-sqlite-e-representacao-fisica.md`;
+- `ADR/004-empacotamento-windows.md`;
+- `ADR/005-integracao-continua.md`.
+
+---
+
+# 10. Inicialização persistente
+
+Após o Electron estar pronto, o processo principal:
+
+1. resolve `app.getPath("userData")/data/rumo.db`;
+2. descobre migrations no projeto em desenvolvimento ou em `resources/migrations` no pacote;
+3. valida ordem e checksums;
+4. aplica migrations pendentes com transação, backup e verificação de integridade;
+5. abre o Prisma Client com foreign keys ativas;
+6. somente então cria a janela principal;
+7. desconecta o cliente durante o encerramento.
+
+Falha de migration ou conexão bloqueia a abertura da aplicação e produz somente código sanitizado no processo principal. A inicialização não cria usuário, preferência ou qualquer dado fictício.
+
+Testes E2E podem substituir o diretório por `RUMO_E2E_USER_DATA_PATH`; essa variável não é usada pelo fluxo funcional.
+
+---
+
+# 11. Distribuição e CI
+
+O Windows x64 é empacotado pelo Electron Forge e instalado por Squirrel.Windows. O instalador é interno, por usuário, sem assinatura, publicação ou atualização automática. Migrations acompanham o pacote e o módulo `better-sqlite3` permanece fora do ASAR.
+
+GitHub Actions separa qualidade do empacotamento Windows. O segundo job somente executa após o primeiro e publica artefatos internos com retenção limitada. A configuração local está validada; a confirmação remota depende da primeira execução no GitHub.

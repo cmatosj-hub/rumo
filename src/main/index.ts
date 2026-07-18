@@ -8,7 +8,7 @@ function getStartupErrorCode(error: unknown): string {
     error !== null &&
     'code' in error &&
     typeof error.code === 'string' &&
-    error.code.startsWith('DATABASE_')
+    (error.code.startsWith('DATABASE_') || error.code.startsWith('MIGRATION_'))
   ) {
     return error.code;
   }
