@@ -9,3 +9,52 @@ generator client {
 datasource db {
   provider = "sqlite"
 }
+
+model LocalUser {
+  id          String        @id
+  name        String
+  isActive    Boolean       @default(true) @map("is_active")
+  createdAt   DateTime      @map("created_at")
+  updatedAt   DateTime      @map("updated_at")
+  settings    UserSettings?
+  auditEvents AuditLog[]
+
+  @@map("local_users")
+}
+
+model UserSettings {
+  id        String    @id
+  userId    String    @unique @map("user_id")
+  currency  String    @default("BRL")
+  timezone  String    @default("America/Sao_Paulo")
+  theme     String    @default("system")
+  createdAt DateTime  @map("created_at")
+  updatedAt DateTime  @map("updated_at")
+  user      LocalUser @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("user_settings")
+}
+
+model AuditLog {
+  id                 String     @id
+  userId             String?    @map("user_id")
+  entity             String
+  entityId           String     @map("entity_id")
+  action             String
+  actorType          String     @map("actor_type")
+  actorId            String?    @map("actor_id")
+  occurredAt         DateTime   @map("occurred_at")
+  operationalDate    String?    @map("operational_date")
+  previousValuesJson String?    @map("previous_values_json")
+  nextValuesJson     String?    @map("next_values_json")
+  reason             String?
+  correlationId      String     @map("correlation_id")
+  source             String
+  technicalVersion   Int        @default(1) @map("technical_version")
+  user               LocalUser? @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([entity, entityId, occurredAt], map: "audit_log_entity_idx")
+  @@index([correlationId], map: "audit_log_correlation_id_idx")
+  @@index([userId, occurredAt], map: "audit_log_user_occurred_at_idx")
+  @@map("audit_log")
+}

@@ -11,6 +11,29 @@ export async function createApplication(): Promise<void> {
 
   configureSecureSession(session.defaultSession);
 
+  const migrationSpikeUserDataPath = process.env.RUMO_MIGRATION_SPIKE_USER_DATA;
+
+  if (migrationSpikeUserDataPath !== undefined) {
+    const [
+      { resolveDatabasePath },
+      { resolveMigrationsDirectory },
+      { runMigrations },
+    ] = await Promise.all([
+      import('../../shared/infrastructure/database/database-path'),
+      import('../../shared/infrastructure/database/migrations/migration-path'),
+      import('../../shared/infrastructure/database/migrations/migration-runner'),
+    ]);
+
+    await runMigrations({
+      databasePath: resolveDatabasePath(migrationSpikeUserDataPath),
+      migrationsDirectory: resolveMigrationsDirectory({
+        isPackaged: app.isPackaged,
+        projectRoot: process.cwd(),
+        resourcesPath: process.resourcesPath,
+      }),
+    });
+  }
+
   const spikeUserDataPath = process.env.RUMO_DATABASE_SPIKE_USER_DATA;
   let disconnectDatabaseClient: (() => Promise<void>) | null = null;
 

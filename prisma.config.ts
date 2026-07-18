@@ -2,7 +2,10 @@ import { defineConfig } from 'prisma/config';
 
 export default defineConfig({
   datasource: {
-    url: 'file:./.prisma-cli/unused.db',
+    url: 'file:./migration-dev.db',
+  },
+  migrations: {
+    path: 'prisma/migrations',
   },
   schema: 'prisma/schema.prisma',
 });

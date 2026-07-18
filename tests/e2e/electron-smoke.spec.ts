@@ -9,6 +9,9 @@ test('abre o shell com isolamento e IPC restrito', async () => {
     path.join(os.tmpdir(), 'rumo-packaged-database-'),
   );
   const databasePath = path.join(temporaryUserData, 'data', 'rumo.db');
+  const packagedMigrationPath = path.resolve(
+    'out/rumo-win32-x64/resources/migrations/20260717220000_foundation/migration.sql',
+  );
 
   for (const [name, value] of Object.entries(process.env)) {
     if (name !== 'ELECTRON_RUN_AS_NODE' && value !== undefined) {
@@ -17,6 +20,9 @@ test('abre o shell com isolamento e IPC restrito', async () => {
   }
 
   electronEnvironment.RUMO_DATABASE_SPIKE_USER_DATA = temporaryUserData;
+  electronEnvironment.RUMO_MIGRATION_SPIKE_USER_DATA = temporaryUserData;
+
+  await expect(access(packagedMigrationPath)).resolves.toBeUndefined();
 
   const application = await electron.launch({
     env: electronEnvironment,

@@ -1,6 +1,7 @@
 export default {
   packagerConfig: {
     asar: true,
+    extraResource: ['prisma/migrations'],
     ignore: (filePath: string): boolean => {
       if (filePath.length === 0) {
         return false;

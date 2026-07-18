@@ -18,8 +18,8 @@
     "format": "prettier --write package.json *.config.ts tsconfig*.json src/main src/modules src/preload src/renderer src/shared tests DOCUMENTACAO/ADR DOCUMENTACAO/08_ARCHITECTURE.md DOCUMENTACAO/09_DEVELOPER.md",
     "format:check": "prettier --check package.json *.config.ts tsconfig*.json src/main src/modules src/preload src/renderer src/shared tests DOCUMENTACAO/ADR DOCUMENTACAO/08_ARCHITECTURE.md DOCUMENTACAO/09_DEVELOPER.md",
     "lint": "eslint . --max-warnings=0",
-    "test": "vitest run --exclude tests/contract/** --exclude tests/integration/**",
-    "test:coverage": "vitest run --coverage --exclude tests/contract/** --exclude tests/integration/**",
+    "test": "vitest run --exclude tests/contract/** --exclude tests/integration/** --exclude tests/migrations/**",
+    "test:coverage": "vitest run --coverage --exclude tests/contract/** --exclude tests/integration/** --exclude tests/migrations/**",
     "test:contract": "vitest run tests/contract",
     "test:e2e": "playwright test",
     "package": "electron-forge package",
@@ -27,8 +27,13 @@
     "prisma:format": "prisma format",
     "prisma:validate": "prisma validate",
     "prisma:generate": "prisma generate",
+    "migration:create": "prisma migrate dev --create-only --name",
+    "migration:validate": "vitest run tests/migrations/migration-validation.test.ts",
+    "migration:apply:test": "vitest run tests/migrations/migration-runner.test.ts",
+    "test:migrations": "vitest run tests/migrations --exclude tests/migrations/migration-failure.test.ts",
+    "test:migration-failure": "vitest run tests/migrations/migration-failure.test.ts",
     "test:integration": "vitest run tests/integration",
-    "verify": "npm run prisma:validate && npm run prisma:generate && npm run format:check && npm run lint && npm run typecheck && npm run test && npm run test:contract && npm run test:integration && npm run build"
+    "verify": "npm run prisma:validate && npm run prisma:generate && npm run migration:validate && npm run test:migrations && npm run test:migration-failure && npm run format:check && npm run lint && npm run typecheck && npm run test && npm run test:contract && npm run test:integration && npm run build"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "7.8.0",
