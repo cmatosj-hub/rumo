@@ -1,4 +1,6 @@
 node_modules/
+.prisma-cli/
+src/generated/prisma/
 .vite/
 dist/
 out/

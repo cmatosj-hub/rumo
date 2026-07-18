@@ -11,6 +11,22 @@ export async function createApplication(): Promise<void> {
 
   configureSecureSession(session.defaultSession);
 
+  const spikeUserDataPath = process.env.RUMO_DATABASE_SPIKE_USER_DATA;
+  let disconnectDatabaseClient: (() => Promise<void>) | null = null;
+
+  if (spikeUserDataPath !== undefined) {
+    const [{ createDatabaseClient }, { resolveDatabasePath }] =
+      await Promise.all([
+        import('../../shared/infrastructure/database/create-database-client'),
+        import('../../shared/infrastructure/database/database-path'),
+      ]);
+    const databaseClient = await createDatabaseClient(
+      resolveDatabasePath(spikeUserDataPath),
+    );
+
+    disconnectDatabaseClient = async () => databaseClient.$disconnect();
+  }
+
   let mainWindow: BrowserWindow | null = await createMainWindow();
   const unregisterFoundationIpc = registerFoundationIpc(ipcMain, {
     applicationVersion: app.getVersion(),
@@ -37,8 +53,22 @@ export async function createApplication(): Promise<void> {
     mainWindow.focus();
   });
 
-  app.once('before-quit', () => {
+  let shutdownStarted = false;
+
+  app.on('before-quit', (event) => {
     unregisterFoundationIpc();
+
+    if (disconnectDatabaseClient === null || shutdownStarted) {
+      return;
+    }
+
+    event.preventDefault();
+    shutdownStarted = true;
+
+    void disconnectDatabaseClient().finally(() => {
+      disconnectDatabaseClient = null;
+      app.quit();
+    });
   });
 
   app.on('window-all-closed', () => {

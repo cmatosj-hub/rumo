@@ -6,8 +6,9 @@
     "types": ["node", "electron"],
     "tsBuildInfoFile": ".vite/tsconfig.main.tsbuildinfo"
   },
-  "files": ["forge.config.ts", "vite.main.config.ts"],
+  "files": ["forge.config.ts", "prisma.config.ts", "vite.main.config.ts"],
   "include": [
+    "src/generated/prisma/**/*.ts",
     "src/main/**/*.ts",
     "src/shared/application/**/*.ts",
     "src/shared/contracts/**/*.ts",

@@ -16,7 +16,7 @@ export default defineConfig({
     },
     outDir: '.vite/build',
     rollupOptions: {
-      external: ['electron', ...nodeBuiltins],
+      external: ['better-sqlite3', 'electron', ...nodeBuiltins],
     },
     sourcemap: true,
   },
