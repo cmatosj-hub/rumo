@@ -1,3 +1,7 @@
+const forceNativeRebuild = ['make', 'package'].includes(
+  process.env.npm_lifecycle_event ?? '',
+);
+
 export default {
   packagerConfig: {
     asar: true,
@@ -13,7 +17,10 @@ export default {
       );
     },
   },
-  rebuildConfig: {},
+  rebuildConfig: {
+    force: forceNativeRebuild,
+    onlyModules: ['better-sqlite3'],
+  },
   makers: [
     {
       name: '@electron-forge/maker-squirrel',

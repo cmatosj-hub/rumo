@@ -14,7 +14,7 @@ describe('workflow da fundação', () => {
     expect(workflow).toContain('pull_request:');
     expect(workflow).toContain('contents: read');
     expect(workflow).toContain('needs: quality');
-    expect(workflow).toContain('runs-on: windows-latest');
+    expect(workflow).toContain('runs-on: windows-2022');
     expect(workflow.match(/run: npm ci/g)).toHaveLength(2);
     expect(workflow).not.toContain('npm install');
   });

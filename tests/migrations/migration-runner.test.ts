@@ -45,6 +45,7 @@ describe('runner de migrations', () => {
 
     expect(firstResult.appliedMigrationIds).toEqual([
       '20260717220000_foundation',
+      '20260718010000_daily_closings',
     ]);
     expect(firstResult.backupPath).toBeNull();
     expect(secondResult.appliedMigrationIds).toEqual([]);
@@ -70,6 +71,7 @@ describe('runner de migrations', () => {
       expect(tables.map(({ name }) => name)).toEqual([
         '_rumo_migrations',
         'audit_log',
+        'daily_closings',
         'local_users',
         'user_settings',
       ]);
@@ -79,6 +81,8 @@ describe('runner de migrations', () => {
         'audit_log_correlation_id_idx',
         'audit_log_entity_idx',
         'audit_log_user_occurred_at_idx',
+        'daily_closings_user_date_idx',
+        'daily_closings_user_date_key',
         'user_settings_user_id_key',
       ]);
       expect(database.pragma('foreign_keys', { simple: true })).toBe(1);

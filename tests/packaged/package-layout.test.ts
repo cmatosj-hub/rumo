@@ -23,6 +23,12 @@ describe('layout do pacote Windows', () => {
       ),
       path.join(
         resourcesDirectory,
+        'migrations',
+        '20260718010000_daily_closings',
+        'migration.sql',
+      ),
+      path.join(
+        resourcesDirectory,
         'app.asar.unpacked',
         'node_modules',
         'better-sqlite3',

@@ -5,9 +5,10 @@ import { describe, expect, it } from 'vitest';
 
 const MIGRATIONS_DIRECTORY = path.resolve('prisma/migrations');
 const FOUNDATION_MIGRATION = '20260717220000_foundation';
+const DAILY_CLOSING_MIGRATION = '20260718010000_daily_closings';
 
 describe('migration fundacional', () => {
-  it('mantém exatamente uma migration versionada e determinística', async () => {
+  it('mantém as migrations versionadas em ordem determinística', async () => {
     const entries = await readdir(MIGRATIONS_DIRECTORY, {
       withFileTypes: true,
     });
@@ -15,13 +16,28 @@ describe('migration fundacional', () => {
       .filter((entry) => entry.isDirectory())
       .map((entry) => entry.name);
 
-    expect(migrationDirectories).toEqual([FOUNDATION_MIGRATION]);
+    expect(migrationDirectories).toEqual([
+      FOUNDATION_MIGRATION,
+      DAILY_CLOSING_MIGRATION,
+    ]);
     await expect(
       readFile(
         path.join(MIGRATIONS_DIRECTORY, FOUNDATION_MIGRATION, 'migration.sql'),
         'utf8',
       ),
     ).resolves.not.toHaveLength(0);
+  });
+
+  it('adiciona o fechamento diário sem alterar a migration fundacional', async () => {
+    const sql = await readFile(
+      path.join(MIGRATIONS_DIRECTORY, DAILY_CLOSING_MIGRATION, 'migration.sql'),
+      'utf8',
+    );
+
+    expect(sql).toContain('CREATE TABLE "daily_closings"');
+    expect(sql).toContain('daily_closings_user_date_key');
+    expect(sql).toContain('final_odometer_meters');
+    expect(sql).toContain('worked_seconds');
   });
 
   it('cria somente metadados, usuário local, preferências e auditoria', async () => {

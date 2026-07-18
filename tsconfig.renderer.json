@@ -9,6 +9,9 @@
   },
   "files": ["vite.renderer.config.ts"],
   "include": [
+    "src/modules/**/domain/**/*.ts",
+    "src/modules/**/presentation/**/*.ts",
+    "src/modules/**/presentation/**/*.tsx",
     "src/renderer/**/*.ts",
     "src/renderer/**/*.tsx",
     "src/shared/contracts/**/*.ts"

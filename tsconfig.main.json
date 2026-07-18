@@ -10,6 +10,9 @@
   "include": [
     "src/generated/prisma/**/*.ts",
     "src/main/**/*.ts",
+    "src/modules/**/application/**/*.ts",
+    "src/modules/**/domain/**/*.ts",
+    "src/modules/**/infrastructure/**/*.ts",
     "src/shared/application/**/*.ts",
     "src/shared/contracts/**/*.ts",
     "src/shared/domain/**/*.ts",

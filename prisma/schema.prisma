@@ -11,15 +11,41 @@ datasource db {
 }
 
 model LocalUser {
-  id          String        @id
-  name        String
-  isActive    Boolean       @default(true) @map("is_active")
-  createdAt   DateTime      @map("created_at")
-  updatedAt   DateTime      @map("updated_at")
-  settings    UserSettings?
-  auditEvents AuditLog[]
+  id            String         @id
+  name          String
+  isActive      Boolean        @default(true) @map("is_active")
+  createdAt     DateTime       @map("created_at")
+  updatedAt     DateTime       @map("updated_at")
+  settings      UserSettings?
+  auditEvents   AuditLog[]
+  dailyClosings DailyClosing[]
 
   @@map("local_users")
+}
+
+model DailyClosing {
+  id                      String    @id
+  userId                  String    @map("user_id")
+  operationalDate         String    @map("operational_date")
+  uberEarningsCents       Int       @map("uber_earnings_cents")
+  ninetyNineEarningsCents Int       @map("ninety_nine_earnings_cents")
+  fuelExpenseCents        Int       @map("fuel_expense_cents")
+  foodExpenseCents        Int       @map("food_expense_cents")
+  parkingExpenseCents     Int       @map("parking_expense_cents")
+  tollExpenseCents        Int       @map("toll_expense_cents")
+  maintenanceExpenseCents Int       @map("maintenance_expense_cents")
+  otherExpensesCents      Int       @map("other_expenses_cents")
+  initialOdometerMeters   Int       @map("initial_odometer_meters")
+  finalOdometerMeters     Int       @map("final_odometer_meters")
+  workedSeconds           Int       @map("worked_seconds")
+  notes                   String?
+  createdAt               DateTime  @map("created_at")
+  updatedAt               DateTime  @map("updated_at")
+  user                    LocalUser @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([userId, operationalDate], map: "daily_closings_user_date_key")
+  @@index([userId, operationalDate], map: "daily_closings_user_date_idx")
+  @@map("daily_closings")
 }
 
 model UserSettings {

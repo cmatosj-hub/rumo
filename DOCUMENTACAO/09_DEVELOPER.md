@@ -88,6 +88,14 @@ Nunca execute `prisma db push`. O aplicativo instalado usa o runner versionado e
 
 `RUMO_E2E_USER_DATA_PATH` é reservado a testes empacotados e deve sempre apontar para diretório temporário removido ao final.
 
+## 10.1 Fechamento diário operacional
+
+A migration `20260718010000_daily_closings` adiciona o primeiro agregado funcional. Valores monetários são persistidos em centavos, odômetros em metros, duração trabalhada em segundos e data operacional como `YYYY-MM-DD` sem conversão UTC.
+
+O renderer usa exclusivamente `window.rumo.dailyClosings.create` e `window.rumo.dailyClosings.list`. O preload e o processo principal validam novamente todos os payloads. A segunda criação para o mesmo proprietário e data é bloqueada; não existe atualização silenciosa.
+
+O primeiro salvamento cria de forma preguiçosa o proprietário local técnico quando ainda não existe. Isso mantém o ownership exigido pelo modelo sem implementar login ou uma interface de usuários nesta entrega. A criação do fechamento e seu evento append-only de auditoria são atômicos e compartilham o `correlationId`. O agregado ainda não produz lançamento ou movimento financeiro: essa integração pertence às entregas canônicas de contas, receitas e despesas e deverá impedir dupla contagem dos registros existentes.
+
 ---
 
 # 4. Regras arquiteturais

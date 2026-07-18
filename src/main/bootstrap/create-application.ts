@@ -1,7 +1,11 @@
 import { app, ipcMain, session, type BrowserWindow } from 'electron';
 
+import { createDailyClosing } from '../../modules/daily-closing/application/create-daily-closing';
+import { listDailyClosings } from '../../modules/daily-closing/application/list-daily-closings';
+import { PrismaDailyClosingRepository } from '../../modules/daily-closing/infrastructure/prisma-daily-closing-repository';
 import { SystemClock } from '../../shared/infrastructure/system-clock';
 import { UuidV7Generator } from '../../shared/infrastructure/uuid-v7-generator';
+import { registerDailyClosingIpc } from '../ipc/register-daily-closing-ipc';
 import { registerFoundationIpc } from '../ipc/register-foundation-ipc';
 import { configureSecureSession } from '../security/configure-session';
 import { createMainWindow } from '../windows/create-main-window';
@@ -39,14 +43,30 @@ export async function createApplication(): Promise<void> {
   let disconnectDatabaseClient: (() => Promise<void>) | null = async () =>
     databaseClient.$disconnect();
 
+  const clock = new SystemClock();
+  const identifierGenerator = new UuidV7Generator();
+  const dailyClosingRepository = new PrismaDailyClosingRepository(
+    databaseClient,
+  );
   let mainWindow: BrowserWindow | null = await createMainWindow();
   const unregisterFoundationIpc = registerFoundationIpc(ipcMain, {
     applicationVersion: app.getVersion(),
-    clock: new SystemClock(),
+    clock,
     electronVersion: process.versions.electron,
     getTrustedWebContents: () => mainWindow?.webContents ?? null,
-    identifierGenerator: new UuidV7Generator(),
+    identifierGenerator,
     nodeVersion: process.versions.node,
+  });
+  const unregisterDailyClosingIpc = registerDailyClosingIpc(ipcMain, {
+    createClosing: async (closing, correlationId) =>
+      createDailyClosing(
+        { clock, identifierGenerator, repository: dailyClosingRepository },
+        closing,
+        correlationId,
+      ),
+    getTrustedWebContents: () => mainWindow?.webContents ?? null,
+    identifierGenerator,
+    listClosings: async () => listDailyClosings(dailyClosingRepository),
   });
 
   mainWindow.on('closed', () => {
@@ -69,6 +89,7 @@ export async function createApplication(): Promise<void> {
 
   app.on('before-quit', (event) => {
     unregisterFoundationIpc();
+    unregisterDailyClosingIpc();
 
     if (disconnectDatabaseClient === null || shutdownStarted) {
       return;

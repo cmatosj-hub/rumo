@@ -95,7 +95,7 @@ describe('falha e recuperação de migration', () => {
     try {
       expect(
         database.prepare('SELECT count(*) FROM _rumo_migrations').pluck().get(),
-      ).toBe(1);
+      ).toBe(2);
     } finally {
       database.close();
     }

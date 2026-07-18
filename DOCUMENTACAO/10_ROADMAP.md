@@ -406,7 +406,7 @@ Não concluído e fora da liberação interna atual:
 - atualização automática;
 - eventual retorno do job `windows-package` de `windows-2022` para `windows-latest`, após suporte oficial ao Visual Studio 2026 na cadeia de rebuild do Electron Forge.
 
-Nenhum módulo funcional do MVP foi iniciado. A fundação técnica está validada localmente e na CI, com build e artefatos Windows reproduzidos no GitHub Actions. O instalador ainda não deve ser declarado validado em máquina limpa até a conclusão do ciclo manual acima.
+A fundação técnica está validada localmente e na CI, com build e artefatos Windows reproduzidos no GitHub Actions. O instalador ainda não deve ser declarado validado em máquina limpa até a conclusão do ciclo manual acima.
 
 ---
 
@@ -417,6 +417,34 @@ Nenhum módulo funcional do MVP foi iniciado. A fundação técnica está valida
 Entregar o núcleo operacional, financeiro e gerencial necessário para o motorista registrar sua rotina, acompanhar o resultado operacional e preservar seus dados localmente.
 
 Todas as funcionalidades do MVP deverão funcionar integralmente offline.
+
+## Estado da primeira entrega vertical em 18/07/2026
+
+Foi implementado o primeiro fluxo funcional ponta a ponta:
+
+- shell desktop com Dashboard, Fechar dia e Fechamentos;
+- registro diário de ganhos Uber e 99, gastos discriminados, quilômetros, horas e observações;
+- resumo automático de ganhos, gastos, resultado, distância e valores por hora;
+- validação no renderer, preload, processo principal, domínio e SQLite;
+- persistência local com Prisma e migration versionada;
+- unicidade por proprietário e data operacional, com bloqueio explícito da segunda criação;
+- auditoria append-only da criação com o mesmo `correlationId` da solicitação;
+- listagem do registro mais recente para o mais antigo;
+- dashboard com quantidade de fechamentos e resultado mais recente;
+- teste empacotado de criação, consulta, encerramento, reabertura e persistência.
+
+Esta entrega antecipada é um agregado operacional autocontido. Seus valores monetários são armazenados em centavos, quilômetros em metros e duração em segundos. Ela não cria contas, lançamentos ou movimentos financeiros silenciosos e, portanto, o resumo exibido não substitui os indicadores financeiros canônicos definidos para as entregas de contas, receitas e despesas. A integração futura com o ledger deverá preservar os registros existentes e impedir dupla contagem.
+
+Como a interface de perfil não pertence a esta entrega, o primeiro salvamento provisiona somente o proprietário local técnico e suas preferências padrão. Login, autenticação e gerenciamento de usuários não foram implementados.
+
+Permanecem fora desta entrega:
+
+- edição, exclusão e cancelamento de fechamentos;
+- contas e movimentos financeiros canônicos;
+- cadastro de veículos e jornadas;
+- receitas individuais e conciliação de cobertura por origem;
+- metas, gráficos, relatórios, filtros avançados e paginação;
+- login, sincronização, cloud, exportação e backup.
 
 ## Regras para entregas verticais
 
