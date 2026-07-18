@@ -18,9 +18,9 @@ O job `windows-package`, dependente de `quality`, executa em `windows-latest`, r
 
 Actions oficiais são referenciadas por versões principais estáveis:
 
-- `actions/checkout@v4`;
-- `actions/setup-node@v4`;
-- `actions/upload-artifact@v4`.
+- `actions/checkout@v7`;
+- `actions/setup-node@v7`;
+- `actions/upload-artifact@v7`.
 
 Somente `Setup.exe`, pacote NuGet e `RELEASES` são enviados como artefato interno, com retenção de 14 dias. Não há release, publicação npm, atualizador, secrets ou credenciais.
 

@@ -1,6 +1,6 @@
 export default {
   arrowParens: 'always',
-  endOfLine: 'crlf',
+  endOfLine: 'lf',
   printWidth: 80,
   proseWrap: 'preserve',
   semi: true,
